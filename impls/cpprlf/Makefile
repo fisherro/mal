@@ -7,6 +7,7 @@ MAINS=$(wildcard step*.cpp)
 NOTMAINS=$(filter-out $(MAINS),$(SRCS))
 
 TARGETS=$(MAINS:%.cpp=%)
+OBJECTS=$(NOTMAINS:%.cpp=%.o)
 
 .PHONY: all maketest clean
 
@@ -18,7 +19,7 @@ maketest:
 	@echo "MAINS: $(MAINS)"
 	@echo "NOTMAINS: $(NOTMAINS)"
 
-$(TARGETS): %: %.o $(NOTMAINS)
+$(TARGETS): %: %.o $(OBJECTS)
 	$(LD) $^ -o $@ $(LDFLAGS)
 
 .cpp.o:
