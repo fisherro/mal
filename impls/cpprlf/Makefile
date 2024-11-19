@@ -19,6 +19,9 @@ maketest:
 	@echo "MAINS: $(MAINS)"
 	@echo "NOTMAINS: $(NOTMAINS)"
 
+.deps: *.cpp *.hpp
+	$(CXX) $(CXXFLAGS) -MM *.cpp > .deps
+
 $(TARGETS): %: %.o $(OBJECTS)
 	$(LD) $^ -o $@ $(LDFLAGS)
 
@@ -26,4 +29,6 @@ $(TARGETS): %: %.o $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -rf *.o $(TARGETS)
+	rm -rf *.o $(TARGETS) .deps
+
+-include .deps

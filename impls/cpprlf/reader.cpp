@@ -51,7 +51,7 @@ struct reader {
     }
 
 private:
-    std::vector<std::string> my_tokens;
+    const std::vector<std::string> my_tokens;
     std::size_t my_position;
 };
 
@@ -82,6 +82,9 @@ mal_type read_atom(reader& r)
     } 
 }
 
+//TODO: [] should create a vector instead of a list.
+//      Vector and list can be the same but must be tagged.
+//TODO: { a b c d } creates a map with entries a:b and c:d.
 mal_type read_list(reader& r, char closer)
 {
     mal_type read_form(reader& r);
