@@ -1,3 +1,4 @@
+#include "core.hpp"
 #include "env.hpp"
 #include "printer.hpp"
 #include "reader.hpp"
@@ -94,26 +95,9 @@ std::string rep(std::string_view s, env& env)
     return print(eval(read(s), env));
 }
 
-//TODO: Move to core.cpp.
-mal_type prn(const mal_list& args)
-{
-    //TODO: Pass print_readably as true.
-    if (not mal_list_empty(args)) {
-        std::cout << pr_str(mal_list_at(args, 0));
-    }
-    std::cout << '\n';
-    return mal_nil{};
-}
-
 int main()
 {
-    env repl_env;
-    ADD_INT_OP(repl_env, +);
-    ADD_INT_OP(repl_env, -);
-    ADD_INT_OP(repl_env, *);
-    ADD_INT_OP(repl_env, /);
-    repl_env.set("prn", mal_proc{prn});
-
+    env repl_env{get_ns()};
     while (true) {
         std::cout << "user> ";
         std::string line;
