@@ -64,6 +64,8 @@ inline std::string get_mal_type(const mal_type& m)
 
 inline std::string get_any_type(const std::any& a)
 {
-    return get_mal_type(mal_cast(a));
+    const mal_type* m{std::any_cast<mal_type>(&a)};
+    if (m) return get_mal_type(*m);
+    return demangle(a.type().name());
 }
 
