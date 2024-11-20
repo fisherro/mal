@@ -16,6 +16,8 @@ Maps are enclosed in braces. Odd elements are keys and even elements are their v
 
 Numbers are (at step 3) integers. Numbers can be added, subtracted, multiplied, and divided.
 
+The atoms nil, false, and true are distinct types.
+
 The def! special form adds values for symbols to the environment.
 
     (def! x 42)
