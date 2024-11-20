@@ -21,9 +21,7 @@ bool eval_debug(env& current_env)
 {
     if (not current_env.has("DEBUG-EVAL")) return false;
     mal_type debug_eval{current_env.get("DEBUG-EVAL")};
-    if (mal_is<mal_nil>(debug_eval)) return false;
-    if (mal_is<mal_false>(debug_eval)) return false;
-    return true;
+    return mal_truthy(debug_eval);
 }
 
 mal_type eval(const mal_type& ast, env& current_env)
@@ -67,6 +65,18 @@ mal_type eval(const mal_type& ast, env& current_env)
                     result = eval(element, current_env);
                 }
                 return result;
+            }
+            if (*symbol == "if") {
+                mal_type condition{mal_list_at(*list, 1)};
+                if (mal_truthy(eval(condition, current_env))) {
+                    mal_type consequent{mal_list_at(*list, 2)};
+                    return eval(consequent, current_env);
+                } else {
+                    std::optional<mal_type> alternate{
+                        try_mal_list_at(*list, 3)};
+                    if (not alternate) return mal_nil{};
+                    return eval(*alternate, current_env);
+                }
             }
         }
         // A mal_proc takes a mal_list and returns an std::any.

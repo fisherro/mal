@@ -1,5 +1,6 @@
 #pragma once
 #include <any>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <variant>
@@ -46,11 +47,15 @@ using mal_type = std::variant<
 template <typename T>
 bool mal_is(const mal_type& m) { return std::holds_alternative<T>(m); }
 
+inline bool mal_truthy(const mal_type& m)
+{ return (not mal_is<mal_nil>(m)) and (not mal_is<mal_false>(m)); }
+
 template <typename T>
 T mal_to(const mal_type& m) { return std::get<T>(m); }
 
 bool mal_list_empty(const mal_list& list);
 mal_type mal_list_at(const mal_list& list, std::size_t i);
+std::optional<mal_type> try_mal_list_at(const mal_list& list, std::size_t i);
 std::vector<mal_type> mal_list_get(const mal_list& list);
 void mal_list_add(mal_list& list, mal_type m);
 

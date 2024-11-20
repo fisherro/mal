@@ -1,6 +1,7 @@
 #include "types.hpp"
 
 #include <any>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <variant>
@@ -23,6 +24,22 @@ bool mal_list_empty(const mal_list& list)
 
 mal_type mal_list_at(const mal_list& list, std::size_t i)
 { return std::any_cast<mal_type>(mal_list_helper::get(list).at(i)); }
+
+std::optional<mal_type> try_mal_list_at(const mal_list& list, std::size_t i)
+{
+#if 0
+    // For some reason, vector.size() is 1 when I used this version!
+    auto vector{mal_list_helper::get(list)};
+    if (i >= vector.size()) return std::nullopt;
+    return std::any_cast<mal_type>(vector.at(i));
+#else
+    try {
+        return mal_list_at(list, i);
+    } catch (const std::out_of_range&) {
+        return std::nullopt;
+    }
+#endif
+}
 
 void mal_list_add(mal_list& list, mal_type m)
 {
