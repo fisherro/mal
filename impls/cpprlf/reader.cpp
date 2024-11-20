@@ -10,7 +10,8 @@
 #include <vector>
 
 struct reader {
-    reader(std::vector<std::string> tokens): my_tokens{std::move(tokens)}, my_position{0} {}
+    reader(std::vector<std::string> tokens):
+        my_tokens{std::move(tokens)}, my_position{0} {}
 
     bool has_more() const { return my_position < my_tokens.size(); }
 
@@ -71,15 +72,24 @@ std::vector<std::string> tokenize(std::string_view sv)
     return tokens;
 }
 
+std::optional<mal_type> try_number(const std::string& token)
+{
+    try {
+        return std::stoi(token);
+    } catch (const std::invalid_argument&) {
+        return std::nullopt;
+    } 
+}
+
 mal_type read_atom(reader& r)
 {
     const auto token{r.next()};
     if (not token) r.throw_eof();
-    try {
-        return std::stoi(*token);
-    } catch (const std::invalid_argument&) {
-        return *token;
-    } 
+    if (auto number{try_number(*token)}; number) return *number;
+    if ("nil" == *token) return mal_nil{};
+    if ("false" == *token) return mal_false{};
+    if ("true" == *token) return mal_true{};
+    return *token;
 }
 
 //TODO: [] should create a vector instead of a list.

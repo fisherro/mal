@@ -30,11 +30,21 @@ private:
     std::function<std::any(mal_list)> my_function;
 };
 
+struct mal_nil {};
+struct mal_false {};
+struct mal_true {};
+
 using mal_type = std::variant<
     int,
     std::string,
+    mal_nil,
+    mal_false,
+    mal_true,
     mal_list,
     mal_proc>;
+
+template <typename T>
+bool mal_is(const mal_type& m) { return std::holds_alternative<T>(m); }
 
 template <typename T>
 T mal_to(const mal_type& m) { return std::get<T>(m); }

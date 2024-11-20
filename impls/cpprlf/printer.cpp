@@ -16,6 +16,9 @@ std::string pr_str(const mal_type& t)
     return std::visit(overloaded{
         [](int v) { return std::to_string(v); },
         [](const std::string& s) { return s; },
+        [](mal_nil) -> std::string { return "nil"; },
+        [](mal_false) -> std::string { return "false"; },
+        [](mal_true) -> std::string { return "true"; },
         [](const mal_list& l) { return print_mal_list(l); },
         [](mal_proc p) -> std::string { return "<proc>"; },
     }, t);

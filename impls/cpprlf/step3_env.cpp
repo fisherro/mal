@@ -16,11 +16,19 @@ auto read(std::string_view s)
     return read_str(s);
 }
 
+bool eval_debug(env& current_env)
+{
+    if (not current_env.has("DEBUG-EVAL")) return false;
+    mal_type debug_eval{current_env.get("DEBUG-EVAL")};
+    if (mal_is<mal_nil>(debug_eval)) return false;
+    if (mal_is<mal_false>(debug_eval)) return false;
+    return true;
+}
+
 mal_type eval(const mal_type& ast, env& current_env)
 {
-    if (current_env.has("DEBUG-EVAL")) {
-        //TODO: Check if DEBUG-EVAL is false or nil
-        std::cout << "EVAL:" << pr_str(ast) << '\n';
+    if (eval_debug(current_env)) {
+        std::cout << "EVAL: " << pr_str(ast) << '\n';
     }
     if (auto sp{std::get_if<std::string>(&ast)}; sp) {
         return current_env.get(*sp);
