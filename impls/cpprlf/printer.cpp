@@ -20,7 +20,7 @@ std::string pr_str(const mal_type& t)
         [](mal_false) -> std::string { return "false"; },
         [](mal_true) -> std::string { return "true"; },
         [](const mal_list& l) { return print_mal_list(l); },
-        [](mal_proc p) -> std::string { return "<proc>"; },
+        [](mal_proc p) -> std::string { return "#<function>"; },
     }, t);
 }
 
