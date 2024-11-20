@@ -1,4 +1,5 @@
 #include "printer.hpp"
+#include "types.hpp"
 #include <algorithm>
 #include <any>
 #include <iterator>
@@ -20,13 +21,13 @@ std::string pr_str(const mal_type& t)
     }, t);
 }
 
-std::string print_mal_list(const mal_list& l)
+std::string print_mal_list(const mal_list& list)
 {
     std::string result{"("};
     // No std::vector::append_range?
-    std::ranges::copy(l
+    std::ranges::copy(mal_list_get(list)
         | std::views::transform([](const auto& e)
-            { return pr_str(mal_cast(e)); })
+            { return pr_str(e); })
         | std::views::join_with(' '), std::back_inserter(result));
     result.push_back(')');
     return result;

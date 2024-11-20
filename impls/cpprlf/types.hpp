@@ -1,15 +1,10 @@
 #pragma once
 #include <any>
-#include <exception>
-#include <functional>
-#include <iomanip>
-#include <sstream>
-#include <source_location>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
-
-#include <cxxabi.h>
+#include <functional>
 
 /*
  * The mal_type variant is recursive. It holds types that depend on itself.
@@ -18,54 +13,43 @@
  * While mal_list is a std::vector<std::any> it only holds mal_type elements.
  * While mal_proc return a std::any, that result always holds a mal_type.
  */
-using mal_list = std::vector<std::any>;
-using mal_proc = std::function<std::any(mal_list)>;
+
+struct mal_list {
+    friend struct mal_list_helper;
+private:
+    std::vector<std::any> my_elements;
+};
+
+template <typename T>
+concept is_mal_list = std::is_same_v<mal_list, std::remove_const_t<T>>;
+
+struct mal_proc {
+    explicit mal_proc(std::function<std::any(mal_list)> f): my_function{f} {}
+    friend struct mal_proc_helper;
+private:
+    std::function<std::any(mal_list)> my_function;
+};
+
 using mal_type = std::variant<
     int,
     std::string,
     mal_list,
     mal_proc>;
 
-inline std::string demangle(const char* mangled)
-{
-    int status{0};
-    return abi::__cxa_demangle(mangled, nullptr, nullptr, &status);
-}
+template <typename T>
+T mal_to(const mal_type& m) { return std::get<T>(m); }
 
-inline mal_type mal_cast(
-        const std::any& any,
-        const std::source_location location = std::source_location::current())
-{
-    try {
-        return std::any_cast<mal_type>(any);
-    } catch (const std::bad_any_cast& e) {
-        std::ostringstream message;
-        message << "std::bad_any_cast in "
-            << std::quoted(location.function_name())
-            << " in file " << std::quoted(location.file_name())
-            << " at line " << location.line();
-        if (not any.has_value()) {
-            message << ": any doesn't hold a value";
-        } else {
-            message << ": type is " << demangle(any.type().name());
-        }
-        throw std::runtime_error(message.str());
-    }
-}
+bool mal_list_empty(const mal_list& list);
+mal_type mal_list_at(const mal_list& list, std::size_t i);
+std::vector<mal_type> mal_list_get(const mal_list& list);
+void mal_list_add(mal_list& list, mal_type m);
 
-inline std::string get_mal_type(const mal_type& m)
-{
-    auto get = [](auto&& arg) -> std::string
-    {
-        return demangle(typeid(arg).name());
-    };
-    return std::visit(get, m);
-}
+template <typename T>
+T mal_list_at_to(const mal_list& list, std::size_t i)
+{ return mal_to<T>(mal_list_at(list, i)); }
 
-inline std::string get_any_type(const std::any& a)
-{
-    const mal_type* m{std::any_cast<mal_type>(&a)};
-    if (m) return get_mal_type(*m);
-    return demangle(a.type().name());
-}
+mal_type mal_proc_call(const mal_proc& p, const mal_list& args);
+
+std::string demangle(const char* mangled);
+std::string get_mal_type(const mal_type& m);
 

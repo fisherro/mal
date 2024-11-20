@@ -10,21 +10,15 @@
 // Including <print> caused:
 // g++: internal compiler error: File size limit exceeded signal terminated program cc1plus
 
-int to_int(const std::any& m)
-{
-    return std::get<int>(mal_cast(m));
-}
+#define MAKE_INT_OP(OP) std::make_pair(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(mal_list_at_to<int>(args, 0) OP mal_list_at_to<int>(args, 1)); }})
 
 using mal_env = std::unordered_map<std::string, mal_proc>;
+
 mal_env repl_env {
-    { "+", [](const mal_list args) -> mal_type
-        { return to_int(args.at(0)) + to_int(args.at(1)); } },
-    { "-", [](const mal_list args) -> mal_type
-        { return to_int(args.at(0)) - to_int(args.at(1)); } },
-    { "*", [](const mal_list args) -> mal_type
-        { return to_int(args.at(0)) * to_int(args.at(1)); } },
-    { "/", [](const mal_list args) -> mal_type
-        { return int(to_int(args.at(0)) / to_int(args.at(1))); } },
+    MAKE_INT_OP(+),
+    MAKE_INT_OP(-),
+    MAKE_INT_OP(*),
+    MAKE_INT_OP(/),
 };
 
 auto read(std::string_view s)
@@ -45,17 +39,18 @@ mal_type eval(const auto& ast, const mal_env& env)
     }
     // A mal_proc takes a mal_list and returns an std::any.
     if (auto list{std::get_if<mal_list>(&ast)}; list) {
-        if (list->empty()) return ast;
-        const mal_type symbol{mal_cast(list->front())};
+        if (mal_list_empty(*list)) return ast;
+        const mal_type symbol{mal_list_at(*list, 0)};
         const mal_type proc_box{eval(symbol, env)};
         if (auto proc_ptr{std::get_if<mal_proc>(&proc_box)}; proc_ptr) {
             mal_list evaluated_args;
-            std::ranges::subrange rest{list->begin() + 1, list->end()};
+            auto vector{mal_list_get(*list)};
+            std::ranges::subrange rest{vector.begin() + 1, vector.end()};
             for (auto& arg: rest) {
-                mal_type evaluated{eval(mal_cast(arg), env)};
-                evaluated_args.push_back(evaluated);
+                mal_type evaluated{eval(arg, env)};
+                mal_list_add(evaluated_args, evaluated);
             }
-            return mal_cast((*proc_ptr)(evaluated_args));
+            return mal_proc_call(*proc_ptr, evaluated_args);
         }
     }
     return ast;

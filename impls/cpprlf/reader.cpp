@@ -98,7 +98,7 @@ mal_type read_list(reader& r, char closer)
             r.next(); // Consume closer.
             return list;
         }
-        list.push_back(read_form(r));
+        mal_list_add(list, read_form(r));
     }
 }
 
