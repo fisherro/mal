@@ -2,6 +2,13 @@ CXX=g++-mp-14
 CXXFLAGS=-O3 -Wall -std=c++2b
 LD=$(CXX)
 
+# address sanitizer not available for arm64
+# I got errors trying hwaddress...might need to install a package?
+#CXXFLAGS+=-fsanitize=hwaddress
+CXXFLAGS+=-fsanitize=leak
+# I got errors with undefined too
+#CXXFLAGS+=-fsanitize=undefined
+
 SRCS=$(wildcard *.cpp)
 MAINS=$(wildcard step*.cpp)
 NOTMAINS=$(filter-out $(MAINS),$(SRCS))
