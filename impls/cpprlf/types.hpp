@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <string>
+#include <typeindex>
 #include <type_traits>
 #include <variant>
 #include <vector>
@@ -19,6 +20,8 @@
 
 struct mal_list {
     friend struct mal_list_helper;
+    //TODO: Use operator<=>?
+    bool operator==(const mal_list& that) const;
 private:
     std::vector<std::any> my_elements;
 };
@@ -28,14 +31,15 @@ concept is_mal_list = std::is_same_v<mal_list, std::remove_const_t<T>>;
 
 struct mal_proc {
     explicit mal_proc(std::function<std::any(mal_list)> f): my_function{f} {}
+    bool operator==(const mal_proc&) const { return true; }
     friend struct mal_proc_helper;
 private:
     std::function<std::any(mal_list)> my_function;
 };
 
-struct mal_nil {};
-struct mal_false {};
-struct mal_true {};
+struct mal_nil { bool operator==(mal_nil) const {return true;} };
+struct mal_false { bool operator==(mal_false) const {return true;} };
+struct mal_true { bool operator==(mal_true) const {return true;} };
 
 using mal_type = std::variant<
     int,
@@ -56,6 +60,7 @@ struct mal_at_exception: std::runtime_error {
 
 std::string demangle(const char* mangled);
 std::string get_mal_type(const mal_type& m);
+std::type_index get_mal_type_info(const mal_type& m);
 
 template <typename T>
 bool mal_is(const mal_type& m) { return std::holds_alternative<T>(m); }

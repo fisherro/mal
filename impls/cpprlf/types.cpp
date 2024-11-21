@@ -17,6 +17,13 @@ struct mal_proc_helper {
     static auto& get(const mal_proc& p) { return p.my_function; }
 };
 
+bool mal_list::operator==(const mal_list& that) const
+{
+    auto this_vec{mal_list_get(*this)};
+    auto that_vec{mal_list_get(that)};
+    return this_vec == that_vec;
+}
+
 bool mal_list_empty(const mal_list& list)
 {
     return mal_list_helper::get(list).empty();
@@ -83,10 +90,18 @@ inline std::string demangle(const char* mangled)
 
 std::string get_mal_type(const mal_type& m)
 {
-    auto get = [](auto&& arg) -> std::string
+    return demangle(get_mal_type_info(m).name());
+}
+
+// Weirdly, std::type_info can't be copied.
+// But C++11 added a wrapper, std::type_index, which can.
+std::type_index get_mal_type_info(const mal_type& m)
+{
+    auto get = [](auto&& arg)
     {
-        return demangle(typeid(arg).name());
+        return std::type_index(typeid(arg));
     };
     return std::visit(get, m);
 }
+
 
