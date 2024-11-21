@@ -3,6 +3,18 @@
 (def! sum2 (fn* (n acc) (if (= n 0) acc (sum2 (- n 1) (+ n acc)))))
 
 ;; TODO: test let*, and do for TCO
+(if true (do (prn 5)(prn 2)(+ 5 2)) (let* (x 2 y 5) (prn x)(prn y)(* x y)))
+;/5
+;/2
+;=>7
+
+(if false (do (prn 5)(prn 2)(+ 5 2)) (let* (x 2 y 5) (do (prn x)(prn y)(* x y))))
+;/2
+;/5
+;=>10
+
+(if false 5)
+;=>nil
 
 (sum2 10 0)
 ;=>55

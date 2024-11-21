@@ -27,7 +27,7 @@ The atoms `nil`, `false`, and `true` are distinct types.
     (def! x 42)
     (/ x 7)
 
-`let*` creates a nested environment.
+`let*` creates a nested environment with new variable bindings. The bindings are simply a list with alternating keys and values. Only one expression is allowed after the variable bindings.
 
     (let* (x 42 y 7)
           (/ x y))
