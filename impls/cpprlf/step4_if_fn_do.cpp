@@ -10,27 +10,28 @@
 #include <string>
 #include <string_view>
 
-#define ADD_INT_OP(ENV, OP) ENV.set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(mal_list_at_to<int>(args, 0) OP mal_list_at_to<int>(args, 1)); }})
-
 auto read(std::string_view s)
 {
     return read_str(s);
 }
 
-bool eval_debug(env& current_env)
+bool check_debug(std::string symbol, std::shared_ptr<env> current_env)
 {
-    if (not current_env.has("DEBUG-EVAL")) return false;
-    mal_type debug_eval{current_env.get("DEBUG-EVAL")};
+    if (not current_env->has(symbol)) return false;
+    mal_type debug_eval{current_env->get(symbol)};
     return mal_truthy(debug_eval);
 }
 
-mal_type eval(const mal_type& ast, env& current_env)
+mal_type eval(const mal_type& ast, std::shared_ptr<env> current_env)
 {
-    if (eval_debug(current_env)) {
+    if (check_debug("DEBUG-EVAL", current_env)) {
         std::cout << "EVAL: " << pr_str(ast) << '\n';
+        if (check_debug("DEBUG-EVAL-ENV", current_env)) {
+            current_env->dump(std::cout);
+        }
     }
     if (auto sp{std::get_if<std::string>(&ast)}; sp) {
-        return current_env.get(*sp);
+        return current_env->get(*sp);
     }
     if (auto list{std::get_if<mal_list>(&ast)}; list) {
         if (mal_list_empty(*list)) return ast;
@@ -38,21 +39,21 @@ mal_type eval(const mal_type& ast, env& current_env)
         if (auto symbol{std::get_if<std::string>(&head)}; symbol) {
             if (*symbol == "def!") {
                 mal_type value{eval(mal_list_at(*list, 2), current_env)};
-                current_env.set(mal_list_at_to<std::string>(*list, 1), value);
+                current_env->set(mal_list_at_to<std::string>(*list, 1), value);
                 return value;
             }
             if (*symbol == "let*") {
                 mal_list args{mal_list_at_to<mal_list>(*list, 1)};
                 auto argsv{mal_list_get(args)};
                 std::ranges::reverse(argsv);
-                env new_env{current_env};
+                auto new_env{env::make(current_env)};
                 while (not argsv.empty()) {
                     std::string key{mal_to<std::string>(argsv.back())};
                     argsv.pop_back();
                     mal_type value_form{argsv.back()};
                     argsv.pop_back();
                     mal_type value{eval(value_form, new_env)};
-                    new_env.set(key, value);
+                    new_env->set(key, value);
                 }
                 mal_type body{mal_list_at(*list, 2)};
                 return eval(body, new_env);
@@ -78,6 +79,26 @@ mal_type eval(const mal_type& ast, env& current_env)
                     return eval(*alternate, current_env);
                 }
             }
+            if (*symbol == "fn*") {
+                mal_list binds{mal_list_at_to<mal_list>(*list, 1)};
+                mal_type body{mal_list_at(*list, 2)};
+                auto closure = [=](const mal_list& args) -> mal_type
+                {
+                    auto new_env{env::make(current_env)};
+                    // The process says that adding the binds/args to the
+                    // environment should be done in the environment's ctor.
+                    auto binds_vector{mal_list_get(binds)};
+                    auto args_vector{mal_list_get(args)};
+                    auto arg_iter{args_vector.begin()};
+                    for (auto& bind: binds_vector) {
+                        if (arg_iter == args_vector.end()) break;
+                        new_env->set(mal_to<std::string>(bind), *arg_iter);
+                        ++arg_iter;
+                    }
+                    return eval(body, new_env);
+                };
+                return mal_proc{closure};
+            }
         }
         // A mal_proc takes a mal_list and returns an std::any.
         const mal_type proc_box{eval(head, current_env)};
@@ -100,23 +121,27 @@ std::string print(const mal_type& mt)
     return pr_str(mt);
 }
 
-std::string rep(std::string_view s, env& env)
+std::string rep(std::string_view s, std::shared_ptr<env> current_env)
 {
-    return print(eval(read(s), env));
+    return print(eval(read(s), current_env));
 }
 
 int main()
 {
-    env repl_env{get_ns()};
-    while (true) {
-        std::cout << "user> ";
-        std::string line;
-        if (not std::getline(std::cin, line)) break;
-        try {
-            std::cout << rep(line, repl_env) << '\n';
-        } catch (const std::exception& e) {
-            std::cout << "Exception: " << e.what() << '\n';
+    try {
+        auto repl_env{env::make(get_ns())};
+        while (true) {
+            std::cout << "user> ";
+            std::string line;
+            if (not std::getline(std::cin, line)) break;
+            try {
+                std::cout << rep(line, repl_env) << '\n';
+            } catch (const std::exception& e) {
+                std::cout << "Exception: " << e.what() << '\n';
+            }
         }
+    } catch (const std::exception& e) {
+        std::cout << "\nEXCEPTION: " << e.what() << '\n';
     }
 }
 

@@ -1,5 +1,5 @@
 #pragma once
 #include "env.hpp"
 
-env get_ns();
+std::shared_ptr<env> get_ns();
 

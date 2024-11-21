@@ -3,7 +3,7 @@
 #include "types.hpp"
 #include <iostream>
 
-#define ADD_INT_OP(ENV, OP) ENV.set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(mal_list_at_to<int>(args, 0) OP mal_list_at_to<int>(args, 1)); }})
+#define ADD_INT_OP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(mal_list_at_to<int>(args, 0) OP mal_list_at_to<int>(args, 1)); }})
 
 mal_type prn(const mal_list& args)
 {
@@ -15,14 +15,14 @@ mal_type prn(const mal_list& args)
     return mal_nil{};
 }
 
-env get_ns()
+std::shared_ptr<env> get_ns()
 {
-    env ns;
+    auto ns{env::make()};
     ADD_INT_OP(ns, +);
     ADD_INT_OP(ns, -);
     ADD_INT_OP(ns, *);
     ADD_INT_OP(ns, /);
-    ns.set("prn", mal_proc{prn});
+    ns->set("prn", mal_proc{prn});
     return ns;
 }
 

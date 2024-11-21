@@ -1,5 +1,5 @@
 CXX=g++-mp-14
-CXXFLAGS=-O3 -Wall -std=c++2b
+CXXFLAGS=-O0 -Wall -std=c++2b
 LD=$(CXX)
 
 # address sanitizer not available for arm64
@@ -8,6 +8,11 @@ LD=$(CXX)
 CXXFLAGS+=-fsanitize=leak
 # I got errors with undefined too
 #CXXFLAGS+=-fsanitize=undefined
+
+#DEBUG=-ggdb
+DEBUG=-g
+CXXFLAGS+=$(DEBUG)
+LDFLAGS+=$(DEBUG)
 
 SRCS=$(wildcard *.cpp)
 MAINS=$(wildcard step*.cpp)

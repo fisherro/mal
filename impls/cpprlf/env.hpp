@@ -1,25 +1,33 @@
 #pragma once
 #include "types.hpp"
-#include <stdexcept>
+#include "printer.hpp"
+#include <iostream>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
+//TODO Move member function definitions to env.cpp.
 //TODO The keys are actually symbols.
 // Once we have a string/symbol distinction, we'll need to fix this.
 struct env {
-    explicit env(const env* outer = nullptr): my_outer{outer} {}
-    bool has(const std::string& key) const { return my_data.contains(key); }
-    void set(const std::string& key, mal_type value) { my_data[key] = value; }
-    mal_type get(const std::string& key) const
-    {
-        //TODO: Loop instead of recursing?
-        auto iter{my_data.find(key)};
-        if (my_data.end() != iter) return iter->second;
-        if (my_outer) return my_outer->get(key);
-        throw std::runtime_error{key + " not found"};
-    }
+    static std::shared_ptr<env> make(
+            std::shared_ptr<env> outer = std::shared_ptr<env>{});
+
+    bool has(const std::string& key) const;
+    void set(const std::string& key, mal_type value);
+    mal_type get(const std::string& key) const;
+    void dump(std::ostream& out) const;
+    
 private:
-    const env* my_outer{nullptr};
+    env() = delete;
+    env(const env&) = delete;
+    env& operator=(const env&) = delete;
+    env(env&&) = delete;
+    env& operator=(env&&) = delete;
+
+    explicit env(std::shared_ptr<env> outer): my_outer{outer} {}
+
+    std::shared_ptr<env> my_outer;
     std::unordered_map<std::string, mal_type> my_data;
 };
 

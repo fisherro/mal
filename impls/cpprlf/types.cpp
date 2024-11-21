@@ -22,8 +22,22 @@ bool mal_list_empty(const mal_list& list)
     return mal_list_helper::get(list).empty();
 }
 
+std::size_t mal_list_size(const mal_list& list)
+{
+    return mal_list_helper::get(list).size();
+}
+
 mal_type mal_list_at(const mal_list& list, std::size_t i)
-{ return std::any_cast<mal_type>(mal_list_helper::get(list).at(i)); }
+{
+    std::optional<mal_type> element_opt{try_mal_list_at(list, i)};
+    if (not element_opt) {
+        std::ostringstream message;
+        message << "Requesting index " << i
+            << "; list size: " << mal_list_size(list);
+        throw mal_to_exception{message.str()};
+    }
+    return *element_opt;
+}
 
 std::optional<mal_type> try_mal_list_at(const mal_list& list, std::size_t i)
 {
@@ -34,7 +48,7 @@ std::optional<mal_type> try_mal_list_at(const mal_list& list, std::size_t i)
     return std::any_cast<mal_type>(vector.at(i));
 #else
     try {
-        return mal_list_at(list, i);
+        return std::any_cast<mal_type>(mal_list_helper::get(list).at(i));
     } catch (const std::out_of_range&) {
         return std::nullopt;
     }
