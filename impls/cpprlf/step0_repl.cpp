@@ -2,12 +2,14 @@
 #include <string>
 #include <string_view>
 
+#include "fake_eval.hpp"
+
 std::string read(std::string_view s)
 {
     return std::string{s};
 }
 
-std::string eval(std::string_view s)
+std::string eval_(std::string_view s)
 {
     return std::string{s};
 }
@@ -19,7 +21,7 @@ std::string print(std::string_view s)
 
 std::string rep(std::string_view s)
 {
-    return print(eval(read(s)));
+    return print(eval_(read(s)));
 }
 
 int main()

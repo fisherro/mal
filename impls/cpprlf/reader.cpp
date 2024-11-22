@@ -95,11 +95,11 @@ mal_type read_atom(reader& r)
 //TODO: [] should create a vector instead of a list.
 //      Vector and list can be the same but must be tagged.
 //TODO: { a b c d } creates a map with entries a:b and c:d.
-mal_type read_list(reader& r, char closer)
+mal_type read_list(reader& r, char opener)
 {
     mal_type read_form(reader& r);
-    const std::string closer_string(1, closer);
-    mal_list list;
+    mal_list list(opener);
+    const std::string closer_string(1, list.get_closer());
     r.next(); // Consume opener
     while (true) {
         const auto token{r.peek()};
@@ -114,21 +114,19 @@ mal_type read_list(reader& r, char closer)
 
 mal_type read_form(reader& r)
 {
-    auto get_closer = [](const auto& token) -> char
+    auto get_opener = [](const auto& token) -> char
     {
         if (token.empty()) return '\0';
         char c{token.at(0)};
-        if ('(' == c) return ')';
-        if ('[' == c) return ']';
-        if ('{' == c) return '}';
+        if (std::string{"([{"}.contains(c)) return c;
         return '\0';
     };
 
     const auto token{r.peek()};
     if (not token) r.throw_eof();
-    const char closer{get_closer(*token)};
-    if (not ('\0' == closer)) {
-        return read_list(r, closer);
+    const char opener{get_opener(*token)};
+    if (not ('\0' == opener)) {
+        return read_list(r, opener);
     } else {
         return read_atom(r);
     }

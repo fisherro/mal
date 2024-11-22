@@ -25,7 +25,7 @@ bool eval_debug(std::shared_ptr<env> current_env)
     return true;
 }
 
-mal_type eval(const mal_type& ast, std::shared_ptr<env> current_env)
+mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
 {
     if (eval_debug(current_env)) {
         std::cout << "EVAL: " << pr_str(ast) << '\n';

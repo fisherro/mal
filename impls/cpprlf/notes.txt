@@ -1,0 +1,14 @@
+Run a previous steps test with a later step's interpreter:
+
+./runtest.py tests/step2_eval.mal impls/cpprlf/step5_tco
+
+In addition to DEBUG-EVAL, I've implemented DEBUG-EVAL-ENV that makes eval print the current environment if both DEBUG-EVAL and DEBUG-EVAL-ENV are truthy.
+
+Open docs/index.html in a web browser for some docs. But it doesn't cover some of the gotchas...like...
+
+So far, numbers are only integers.
+nil true false ; ...are all distinct types without only themselves as values.
+(count nil) => 0
+(let* () a b) ; ...is an error. Only one thing allowed in the body.
+(fn* () a b)  ; ...is an error. Only one thing allowed in the body.
+

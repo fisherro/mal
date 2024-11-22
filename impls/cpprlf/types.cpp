@@ -1,4 +1,5 @@
 #include "types.hpp"
+#include "env.hpp"
 
 #include <any>
 #include <stdexcept>
@@ -15,6 +16,11 @@ struct mal_list_helper {
 
 struct mal_proc_helper {
     static auto& get(const mal_proc& p) { return p.my_function; }
+};
+
+struct mal_func_helper {
+    static mal_type ast(const mal_func& f)
+    { return std::any_cast<mal_type>(f.my_ast); }
 };
 
 bool mal_list::operator==(const mal_list& that) const
@@ -102,6 +108,43 @@ std::type_index get_mal_type_info(const mal_type& m)
         return std::type_index(typeid(arg));
     };
     return std::visit(get, m);
+}
+
+mal_type mal_func_ast(const mal_func& f)
+{
+    return mal_func_helper::ast(f);
+}
+
+std::shared_ptr<env> mal_func::make_env(const mal_list& args) const
+{
+    auto new_env{env::make(my_env)};
+    auto params_vector{mal_list_get(my_params)};
+    auto args_vector{mal_list_get(args)};
+    auto arg_iter{args_vector.begin()};
+    for (auto& param: params_vector) {
+        if (arg_iter == args_vector.end()) break;
+        new_env->set(mal_to<std::string>(param), *arg_iter);
+        ++arg_iter;
+    }
+    return new_env;
+}
+
+mal_func::mal_func(mal_list ast, std::shared_ptr<env> current_env):
+    my_params{mal_list_at_to<mal_list>(ast, 1)},
+    my_ast{mal_list_at(ast, 2)},
+    my_env{current_env}
+{
+    // Could we define this in the initializer list? Maybe? Does it matter?
+    auto closure = [=, this](const mal_list& args) -> mal_type
+    {
+        // Declaration of eval.
+        // I don't currently have an appropriate header file to put this in.
+        mal_type eval(mal_type, std::shared_ptr<env>);
+
+        auto new_env{make_env(args)};
+        return eval(mal_func_ast(*this), new_env);
+    };
+    my_proc = mal_proc{closure};
 }
 
 

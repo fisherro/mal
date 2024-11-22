@@ -22,7 +22,7 @@ bool check_debug(std::string symbol, std::shared_ptr<env> current_env)
     return mal_truthy(debug_eval);
 }
 
-mal_type eval(const mal_type& ast, std::shared_ptr<env> current_env)
+mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
 {
     if (check_debug("DEBUG-EVAL", current_env)) {
         std::cout << "EVAL: " << pr_str(ast) << '\n';

@@ -5,6 +5,8 @@
 #include <string>
 #include <string_view>
 
+#include "fake_eval.hpp"
+
 // Including <print> caused:
 // g++: internal compiler error: File size limit exceeded signal terminated program cc1plus
 
@@ -13,7 +15,7 @@ auto read(std::string_view s)
     return read_str(s);
 }
 
-auto eval(const auto& ast)
+auto eval_(const auto& ast)
 {
     return ast;
 }
@@ -25,7 +27,7 @@ std::string print(const mal_type& mt)
 
 std::string rep(std::string_view s)
 {
-    return print(eval(read(s)));
+    return print(eval_(read(s)));
 }
 
 int main()

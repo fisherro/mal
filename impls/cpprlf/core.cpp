@@ -32,7 +32,9 @@ mal_type list(const mal_list& args)
 
 mal_type is_list(const mal_list& args)
 {
-    return bool_it(mal_is<mal_list>(mal_list_at(args, 0)));
+    auto list_opt{try_mal_to<mal_list>(mal_list_at(args, 0))};
+    if (not list_opt) return mal_false{};
+    return bool_it(list_opt->is_list());
 }
 
 mal_type is_empty(const mal_list& args)
