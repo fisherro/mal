@@ -30,6 +30,9 @@ struct mal_list {
     //TODO: Use operator<=>?
     bool operator==(const mal_list& that) const;
 
+    bool empty() const { return my_elements.empty(); }
+    std::size_t size() const { return my_elements.size(); }
+
     char get_opener() const { return my_opener; }
     char get_closer() const
     {
@@ -41,6 +44,9 @@ struct mal_list {
 
     bool is_list() const { return '(' == my_opener; }
     bool is_vector() const { return '[' == my_opener; }
+
+    template <typename T>
+    T at_to(std::size_t i) const;
 
 private:
     // Used to distinguish "lists" from "vectors".
@@ -139,17 +145,15 @@ std::optional<T> try_mal_to(const mal_type& m)
     return *value_ptr;
 }
 
-//TODO: Make mal_list functions that don't involve mal_type members.
-bool mal_list_empty(const mal_list& list);
-std::size_t mal_list_size(const mal_list& list);
 mal_type mal_list_at(const mal_list& list, std::size_t i);
 std::optional<mal_type> try_mal_list_at(const mal_list& list, std::size_t i);
 std::vector<mal_type> mal_list_get(const mal_list& list);
 void mal_list_add(mal_list& list, mal_type m);
 
 template <typename T>
-T mal_list_at_to(const mal_list& list, std::size_t i)
-{ return mal_to<T>(mal_list_at(list, i)); }
+T mal_list::at_to(std::size_t i) const
+{ return mal_to<T>(mal_list_at(*this, i)); }
 
 mal_type mal_proc_call(const mal_proc& p, const mal_list& args);
 mal_type mal_func_ast(const mal_func& p);
+

@@ -9,7 +9,7 @@
 #include <string>
 #include <string_view>
 
-#define ADD_INT_OP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(mal_list_at_to<int>(args, 0) OP mal_list_at_to<int>(args, 1)); }})
+#define ADD_INT_OP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(args.at_to<int>(0) OP args.at_to<int>(1)); }})
 
 auto read(std::string_view s)
 {
@@ -34,16 +34,16 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
         return current_env->get(*sp);
     }
     if (auto list{std::get_if<mal_list>(&ast)}; list) {
-        if (mal_list_empty(*list)) return ast;
+        if (list->empty()) return ast;
         const mal_type head{mal_list_at(*list, 0)};
         if (auto symbol{std::get_if<std::string>(&head)}; symbol) {
             if (*symbol == "def!") {
                 mal_type value{eval(mal_list_at(*list, 2), current_env)};
-                current_env->set(mal_list_at_to<std::string>(*list, 1), value);
+                current_env->set(list->at_to<std::string>(1), value);
                 return value;
             }
             if (*symbol == "let*") {
-                mal_list args{mal_list_at_to<mal_list>(*list, 1)};
+                mal_list args{list->at_to<mal_list>(1)};
                 auto argsv{mal_list_get(args)};
                 std::ranges::reverse(argsv);
                 auto new_env{env::make(current_env)};

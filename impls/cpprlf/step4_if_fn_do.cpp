@@ -34,16 +34,16 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
         return current_env->get(*sp);
     }
     if (auto list{std::get_if<mal_list>(&ast)}; list) {
-        if (mal_list_empty(*list)) return ast;
+        if (list->empty()) return ast;
         const mal_type head{mal_list_at(*list, 0)};
         if (auto symbol{std::get_if<std::string>(&head)}; symbol) {
             if (*symbol == "def!") {
                 mal_type value{eval(mal_list_at(*list, 2), current_env)};
-                current_env->set(mal_list_at_to<std::string>(*list, 1), value);
+                current_env->set(list->at_to<std::string>(1), value);
                 return value;
             }
             if (*symbol == "let*") {
-                mal_list args{mal_list_at_to<mal_list>(*list, 1)};
+                mal_list args{list->at_to<mal_list>(1)};
                 auto argsv{mal_list_get(args)};
                 std::ranges::reverse(argsv);
                 auto new_env{env::make(current_env)};
@@ -80,7 +80,7 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                 }
             }
             if (*symbol == "fn*") {
-                mal_list binds{mal_list_at_to<mal_list>(*list, 1)};
+                mal_list binds{list->at_to<mal_list>(1)};
                 mal_type body{mal_list_at(*list, 2)};
                 auto closure = [=](const mal_list& args) -> mal_type
                 {

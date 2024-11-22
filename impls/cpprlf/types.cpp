@@ -30,23 +30,13 @@ bool mal_list::operator==(const mal_list& that) const
     return this_vec == that_vec;
 }
 
-bool mal_list_empty(const mal_list& list)
-{
-    return mal_list_helper::get(list).empty();
-}
-
-std::size_t mal_list_size(const mal_list& list)
-{
-    return mal_list_helper::get(list).size();
-}
-
 mal_type mal_list_at(const mal_list& list, std::size_t i)
 {
     std::optional<mal_type> element_opt{try_mal_list_at(list, i)};
     if (not element_opt) {
         std::ostringstream message;
         message << "Requesting index " << i
-            << "; list size: " << mal_list_size(list);
+            << "; list size: " << list.size();
         throw mal_to_exception{message.str()};
     }
     return *element_opt;
@@ -130,7 +120,7 @@ std::shared_ptr<env> mal_func::make_env(const mal_list& args) const
 }
 
 mal_func::mal_func(mal_list ast, std::shared_ptr<env> current_env):
-    my_params{mal_list_at_to<mal_list>(ast, 1)},
+    my_params{ast.at_to<mal_list>(1)},
     my_ast{mal_list_at(ast, 2)},
     my_env{current_env}
 {

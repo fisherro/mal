@@ -3,9 +3,9 @@
 #include "types.hpp"
 #include <iostream>
 
-#define ADD_INT_OP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(mal_list_at_to<int>(args, 0) OP mal_list_at_to<int>(args, 1)); }})
+#define ADD_INT_OP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(args.at_to<int>(0) OP args.at_to<int>(1)); }})
 
-#define ADD_INT_COMP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return bool_it(mal_list_at_to<int>(args, 0) OP mal_list_at_to<int>(args, 1)); }})
+#define ADD_INT_COMP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return bool_it(args.at_to<int>(0) OP args.at_to<int>(1)); }})
 
 #define ADD_FUNC(ENV, FUNC) ENV->set(std::string{#FUNC}, mal_proc{FUNC})
 
@@ -18,7 +18,7 @@ mal_type bool_it(bool b)
 mal_type prn(const mal_list& args)
 {
     //TODO: Pass print_readably as true.
-    if (not mal_list_empty(args)) {
+    if (not args.empty()) {
         std::cout << pr_str(mal_list_at(args, 0));
     }
     std::cout << '\n';
@@ -39,7 +39,7 @@ mal_type is_list(const mal_list& args)
 
 mal_type is_empty(const mal_list& args)
 {
-    return bool_it(mal_list_empty(mal_list_at_to<mal_list>(args, 0)));
+    return bool_it(args.at_to<mal_list>(0).empty());
 }
 
 mal_type count(const mal_list& args)
@@ -47,7 +47,7 @@ mal_type count(const mal_list& args)
     mal_type arg{mal_list_at(args, 0)};
     if (mal_is<mal_nil>(arg)) return 0;
     //TODO: Check for integer overflow?
-    return int(mal_list_size(mal_to<mal_list>(arg)));
+    return int(mal_to<mal_list>(arg).size());
 }
 
 mal_type equals(const mal_list& args)

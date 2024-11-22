@@ -9,7 +9,7 @@
 
 #include "fake_eval.hpp"
 
-#define MAKE_INT_OP(OP) std::make_pair(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(mal_list_at_to<int>(args, 0) OP mal_list_at_to<int>(args, 1)); }})
+#define MAKE_INT_OP(OP) std::make_pair(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(args.at_to<int>(0) OP args.at_to<int>(1)); }})
 
 using mal_env = std::unordered_map<std::string, mal_proc>;
 
@@ -38,7 +38,7 @@ mal_type eval_(const auto& ast, const mal_env& env)
     }
     // A mal_proc takes a mal_list and returns an std::any.
     if (auto list{std::get_if<mal_list>(&ast)}; list) {
-        if (mal_list_empty(*list)) return ast;
+        if (list->empty()) return ast;
         const mal_type symbol{mal_list_at(*list, 0)};
         const mal_type proc_box{eval_(symbol, env)};
         if (auto proc_ptr{std::get_if<mal_proc>(&proc_box)}; proc_ptr) {
