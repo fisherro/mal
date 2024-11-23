@@ -170,6 +170,7 @@ int main()
 {
     try {
         auto repl_env{env::make(get_ns())};
+        rep("(def! not (fn* (a) (if a false true)))", repl_env);
         while (true) {
             std::cout << "user> ";
             std::string line;
