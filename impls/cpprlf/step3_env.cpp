@@ -28,7 +28,7 @@ bool eval_debug(std::shared_ptr<env> current_env)
 mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
 {
     if (eval_debug(current_env)) {
-        std::cout << "EVAL: " << pr_str(ast) << '\n';
+        std::cout << "EVAL: " << pr_str(ast, true) << '\n';
     }
     if (auto sp{std::get_if<std::string>(&ast)}; sp) {
         return current_env->get(*sp);
@@ -77,7 +77,7 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
 
 std::string print(const mal_type& mt)
 {
-    return pr_str(mt);
+    return pr_str(mt, true);
 }
 
 std::string rep(std::string_view s, std::shared_ptr<env> current_env)

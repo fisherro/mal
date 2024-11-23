@@ -22,7 +22,7 @@ auto eval_(const auto& ast)
 
 std::string print(const mal_type& mt)
 {
-    return pr_str(mt);
+    return pr_str(mt, true);
 }
 
 std::string rep(std::string_view s)

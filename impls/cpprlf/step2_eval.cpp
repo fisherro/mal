@@ -57,7 +57,7 @@ mal_type eval_(const auto& ast, const mal_env& env)
 
 std::string print(const mal_type& mt)
 {
-    return pr_str(mt);
+    return pr_str(mt, true);
 }
 
 std::string rep(std::string_view s)

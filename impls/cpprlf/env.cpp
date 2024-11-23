@@ -37,7 +37,7 @@ void env::dump(std::ostream& out) const
     for (auto& [key, value]: my_data) {
         out << key << ":"
             << get_mal_type(value) << ":"
-            << pr_str(value) << '\n';
+            << pr_str(value, true) << '\n';
     }
     if (my_outer) {
         out << "next environment...\n";

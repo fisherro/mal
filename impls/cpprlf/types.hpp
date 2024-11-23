@@ -89,14 +89,15 @@ private:
 /*
  * To add a type to this, be sure...
  *
- *      - It has an op=.
+ *      - It has an op==.
  *      - It's been added to the visitor in printer.cpp
  *
  * ...else you'll get a nasty pile of compile errors.
  */
 using mal_type = std::variant<
     int,
-    std::string,
+    std::string,       // used for symbols
+    std::vector<char>, // used for strings
     mal_nil,
     mal_false,
     mal_true,

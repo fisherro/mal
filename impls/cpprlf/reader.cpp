@@ -81,10 +81,56 @@ std::optional<mal_type> try_number(const std::string& token)
     } 
 }
 
+mal_type read_string(std::string_view s)
+{
+    /*
+     * When a string is read, the following transformations are applied:
+     *
+     * a backslash followed by a doublequote is translated into a plain
+     * doublequote character,
+     *
+     * a backslash followed by "n" is translated into a newline,
+     *
+     * and a backslash followed by another backslash is translated into a
+     * single backslash.
+     */
+    if ((s.size() < 2) or ('"' != s.back())) {
+        throw std::runtime_error{"unbalanced doublequote"};
+    }
+    // Remove the leading and trailing doublequotes.
+    s.remove_prefix(1);
+    s.remove_suffix(1);
+    std::vector<char> v;
+    bool backslash_seen{false};
+    for (char c: s) {
+        if (backslash_seen and ('n' == c)) {
+            v.push_back('\n');
+            backslash_seen = false;
+        } else if (backslash_seen) {
+            v.push_back(c);
+            backslash_seen = false;
+        } else if ('\\' == c) {
+            backslash_seen = true;
+        } else {
+            v.push_back(c);
+        }
+    }
+    if (backslash_seen) {
+        // Using the phrase "end of input" to match what the tests expects.
+        throw std::runtime_error{
+            "unexpected end of input (string)"
+        };
+    }
+    return v;
+}
+
 mal_type read_atom(reader& r)
 {
     const auto token{r.next()};
     if (not token) r.throw_eof();
+    if ((token->size() > 0) and ('"' == token->at(0))) {
+        return read_string(*token);
+    }
     if (auto number{try_number(*token)}; number) return *number;
     if ("nil" == *token) return mal_nil{};
     if ("false" == *token) return mal_false{};

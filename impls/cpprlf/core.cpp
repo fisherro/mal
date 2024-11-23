@@ -2,6 +2,7 @@
 #include "printer.hpp"
 #include "types.hpp"
 #include <iostream>
+#include <utility>
 
 #define ADD_INT_OP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(args.at_to<int>(0) OP args.at_to<int>(1)); }})
 
@@ -17,9 +18,11 @@ mal_type bool_it(bool b)
 
 mal_type prn(const mal_list& args)
 {
-    //TODO: Pass print_readably as true.
-    if (not args.empty()) {
-        std::cout << pr_str(mal_list_at(args, 0));
+    auto argv{mal_list_get(args)};
+    bool first{true};
+    for (auto& arg: argv) {
+        if (not std::exchange(first, false)) std::cout << ' ';
+        std::cout << pr_str(arg, true);
     }
     std::cout << '\n';
     return mal_nil{};
