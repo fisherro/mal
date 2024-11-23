@@ -35,6 +35,9 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
             }
         }
         if (auto sp{std::get_if<std::string>(&ast)}; sp) {
+            // Keywords evaluate to themselves.
+            // Does a lone colon could as a keyword?
+            if ((sp->size() > 0) and (':' == sp->at(0))) return ast;
             return current_env->get(*sp);
         }
         if (auto list{std::get_if<mal_list>(&ast)}; list) {
