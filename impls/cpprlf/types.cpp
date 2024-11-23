@@ -1,7 +1,9 @@
 #include "types.hpp"
 #include "env.hpp"
 
+#include <algorithm>
 #include <any>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -207,14 +209,45 @@ mal_type mal_func_ast(const mal_func& f)
 
 std::shared_ptr<env> mal_func::make_env(const mal_list& args) const
 {
+    auto mal_to_string = [](const mal_type& m)
+    { return mal_to<std::string>(m); };
+
+    // Create a new environment:
     auto new_env{env::make(my_env)};
-    auto params_vector{mal_list_get(my_params)};
+    // Convert my_params to a vector<string>:
+    auto params_vector{
+        mal_list_get(my_params)
+        | std::views::transform(mal_to_string)
+        | std::ranges::to<std::vector<std::string>>()
+    };
+    // Look for an ampersand; if found prepare for var arg handling.
+    auto amp_iter{std::ranges::find(params_vector, "&")};
+    std::string rest_param;
+    if (params_vector.end() != amp_iter) {
+        auto next{amp_iter + 1};
+        if (params_vector.end() == next) {
+            throw std::runtime_error{"no name for the rest parameter"};
+        }
+        rest_param = *next;
+    }
+    // Bind the regular parameters to the arguments in the new environment.
+    std::ranges::subrange regular_params{params_vector.begin(), amp_iter};
     auto args_vector{mal_list_get(args)};
     auto arg_iter{args_vector.begin()};
-    for (auto& param: params_vector) {
+    for (auto& param: regular_params) {
         if (arg_iter == args_vector.end()) break;
-        new_env->set(mal_to<std::string>(param), *arg_iter);
+        new_env->set(param, *arg_iter);
         ++arg_iter;
+    }
+    // If we found an ampersand earlier, make a list of remaining args, and
+    // bind the list to rest_param.
+    if (params_vector.end() != amp_iter) {
+        mal_list rest;
+        std::ranges::subrange var_args{arg_iter, args_vector.end()};
+        for (auto& arg: var_args) {
+            mal_list_add(rest, arg);
+        }
+        new_env->set(rest_param, rest);
     }
     return new_env;
 }
