@@ -41,6 +41,7 @@ std::string pr_str(const mal_type& t, bool print_readably)
 {
     // Need to forward declare print_mal_list:
     std::string print_mal_list(const mal_list&, bool);
+    std::string print_mal_map(const mal_map&, bool);
 
     return std::visit(overloaded{
         [](int v) { return std::to_string(v); },
@@ -53,6 +54,8 @@ std::string pr_str(const mal_type& t, bool print_readably)
         [print_readably](const mal_list& l)
         { return print_mal_list(l, print_readably); },
         //TODO: Do we want to distinguish proc & func?
+        [print_readably](const mal_map& m)
+        { return print_mal_map(m, print_readably); },
         [](mal_proc p) -> std::string { return "#<function>"; },
         [](mal_func f) -> std::string { return "#<function>"; },
     }, t);
@@ -67,6 +70,27 @@ std::string print_mal_list(const mal_list& list, bool print_readably)
             { return pr_str(e, print_readably); })
         | std::views::join_with(' '), std::back_inserter(result));
     result.push_back(list.get_closer());
+    return result;
+}
+
+std::string print_mal_map(const mal_map& map, bool print_readably)
+{
+    auto transformer = [print_readably](const auto& pair)
+    {
+        auto& [inner_key, value] = pair;
+        mal_type outer_key{mal_map_ikey_to_okey(inner_key)};
+        return pr_str(outer_key, print_readably)
+            + " "
+            + pr_str(value, print_readably);
+    };
+
+    std::string result(1, '{');
+    auto vector{mal_map_pairs(map)};
+    std::ranges::copy(mal_map_pairs(map)
+            | std::views::transform(transformer)
+            | std::views::join_with(' '),
+            std::back_inserter(result));
+    result += '}';
     return result;
 }
 

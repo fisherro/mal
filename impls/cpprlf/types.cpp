@@ -119,10 +119,17 @@ std::type_index get_mal_type_info(const mal_type& m)
  */
 std::string mal_map_okey_to_ikey(const mal_type& outer_key)
 {
+    auto bad_key = [&outer_key]()
+    {
+        std::string type{get_mal_type(outer_key)};
+        std::string value{pr_str(outer_key, true)};
+        throw std::runtime_error{
+            std::string{"bad map key type: "} + type + " " + value
+        };
+    };
+
     if (auto kw_ptr{std::get_if<std::string>(&outer_key)}; kw_ptr) {
-        if (kw_ptr->empty() or (':' != kw_ptr->at(0))) {
-            throw std::runtime_error{"bad map key type"};
-        }
+        if (kw_ptr->empty() or (':' != kw_ptr->at(0))) bad_key();
         return std::string(1, 'k') + *kw_ptr;
     }
     if (auto s_ptr{std::get_if<std::vector<char>>(&outer_key)}; s_ptr) {
@@ -130,7 +137,24 @@ std::string mal_map_okey_to_ikey(const mal_type& outer_key)
         inner_key.append(s_ptr->begin(), s_ptr->end());
         return inner_key;
     }
-    throw std::runtime_error{"bad map key type"};
+    bad_key();
+    // We'll never get here, but the compiler couldn't tell.
+    return std::string{};
+}
+
+mal_type mal_map_ikey_to_okey(std::string_view inner_key)
+{
+    if (inner_key.empty()) {
+        throw std::runtime_error{"invalid map inner key"};
+    }
+    if ('k' == inner_key[0]) {
+        inner_key.remove_prefix(1);
+        return mal_type{std::string{inner_key}};
+    }
+    if ('s' == inner_key[0]) {
+        return std::vector<char>(inner_key.begin() + 1, inner_key.end());
+    }
+    throw std::runtime_error{"invalid map inner key"};
 }
 
 bool mal_map::operator==(const mal_map& that) const

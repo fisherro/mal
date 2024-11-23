@@ -11,6 +11,10 @@
 #include <variant>
 #include <vector>
 
+struct mal_nil { bool operator==(mal_nil) const {return true;} };
+struct mal_false { bool operator==(mal_false) const {return true;} };
+struct mal_true { bool operator==(mal_true) const {return true;} };
+
 /*
  * The mal_type variant is recursive. It holds types that depend on itself.
  * We use type erasure via std::any to break the recursion.
@@ -18,10 +22,6 @@
  * While mal_list is a std::vector<std::any> it only holds mal_type elements.
  * While mal_proc return a std::any, that result always holds a mal_type.
  */
-
-struct mal_nil { bool operator==(mal_nil) const {return true;} };
-struct mal_false { bool operator==(mal_false) const {return true;} };
-struct mal_true { bool operator==(mal_true) const {return true;} };
 
 struct mal_list {
     friend struct mal_list_helper;
@@ -38,18 +38,19 @@ struct mal_list {
     {
         if ('(' == my_opener) return ')';
         if ('[' == my_opener) return ']';
-        if ('{' == my_opener) return '}'; //TODO: eventually goes away?
+        if ('{' == my_opener) return '}';
         return '\0';
     }
 
-    bool is_list() const { return '(' == my_opener; }
+    bool is_list()   const { return '(' == my_opener; }
     bool is_vector() const { return '[' == my_opener; }
+    bool is_map()    const { return '{' == my_opener; }
 
     template <typename T>
     T at_to(std::size_t i) const;
 
 private:
-    // Used to distinguish "lists" from "vectors".
+    // Used to distinguish lists, vectors, & unevaluated maps.
     char my_opener{'('};
     std::vector<std::any> my_elements;
 };
@@ -117,6 +118,7 @@ using mal_type = std::variant<
     mal_false,
     mal_true,
     mal_list,
+    mal_map,
     mal_proc,
     mal_func>;
 
@@ -171,6 +173,7 @@ T mal_list::at_to(std::size_t i) const
 { return mal_to<T>(mal_list_at(*this, i)); }
 
 std::string mal_map_okey_to_ikey(const mal_type& outer_key);
+mal_type mal_map_ikey_to_okey(std::string_view inner_key);
 void mal_map_set(
         mal_map& map, const mal_type& outer_key, const mal_type& value);
 std::optional<mal_type> mal_map_get(

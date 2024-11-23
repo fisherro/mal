@@ -7,6 +7,7 @@
 #include <functional>
 #include <iostream>
 #include <ranges>
+#include <span>
 #include <string>
 #include <string_view>
 
@@ -41,6 +42,26 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
             return current_env->get(*sp);
         }
         if (auto list{std::get_if<mal_list>(&ast)}; list) {
+            if (list->is_map()) {
+                // Maps are read as lists. When the list is evaluated, we
+                // convert it to an actual mal_map object.
+                mal_map result;
+                if (0 == list->size()) {
+                    return result;
+                }
+                if (0 != (list->size() % 2)) {
+                    throw std::runtime_error{"missing map value"};
+                }
+                auto cpp_vector{mal_list_get(*list)};
+                std::span<mal_type> span(cpp_vector);
+                while (span.size() > 0) {
+                    mal_type outer_key{eval(span[0], current_env)};
+                    mal_type value{eval(span[1], current_env)};
+                    mal_map_set(result, outer_key, value);
+                    span = span.subspan(2);
+                }
+                return result;
+            }
             if (list->is_vector()) {
                 mal_list results{'['};
                 auto cpp_vector{mal_list_get(*list)};

@@ -138,9 +138,9 @@ mal_type read_atom(reader& r)
     return *token;
 }
 
-//TODO: [] should create a vector instead of a list.
-//      Vector and list can be the same but must be tagged.
-//TODO: { a b c d } creates a map with entries a:b and c:d.
+// Lists and vectors are both represented by mal_list.
+// So are maps until they are evaluated.
+// The "opener" character determines which it is.
 mal_type read_list(reader& r, char opener)
 {
     mal_type read_form(reader& r);
@@ -152,6 +152,11 @@ mal_type read_list(reader& r, char opener)
         if (not token) r.throw_eof();
         if (closer_string == *token) {
             r.next(); // Consume closer.
+            if (('{' == list.get_opener()) and
+                (0 != (list.size() % 2)))
+            {
+                r.throw_eof();
+            }
             return list;
         }
         mal_list_add(list, read_form(r));
@@ -173,9 +178,8 @@ mal_type read_form(reader& r)
     const char opener{get_opener(*token)};
     if (not ('\0' == opener)) {
         return read_list(r, opener);
-    } else {
-        return read_atom(r);
     }
+    return read_atom(r);
 }
 
 mal_type read_str(std::string_view s)

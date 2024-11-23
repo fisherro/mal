@@ -8,6 +8,11 @@ To exclude deferrable and optional tests:
 
 In addition to DEBUG-EVAL, I've implemented DEBUG-EVAL-ENV that makes eval print the current environment if both DEBUG-EVAL and DEBUG-EVAL-ENV are truthy.
 
+Lists and vectors are mostly the same. Differences list here as I discover them:
+
+	- Lists, in many contexts, will be evaluated as an application;
+	  Vectors won't.
+
 Open docs/index.html in a web browser for some docs. But it doesn't cover some of the gotchas...like...
 
 So far, numbers are only integers.
