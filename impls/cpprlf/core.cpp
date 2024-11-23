@@ -1,7 +1,10 @@
 #include "env.hpp"
 #include "printer.hpp"
+#include "reader.hpp"
 #include "types.hpp"
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <ranges>
 #include <utility>
 
@@ -88,6 +91,21 @@ mal_type equals(const mal_list& args)
     return bool_it(lhs == rhs);
 }
 
+mal_type core_read_string(const mal_list& args)
+{
+    return read_str(std::string_view{args.at_to<std::vector<char>>(0)});
+}
+
+mal_type slurp(const mal_list& args)
+{
+    std::ifstream in{
+        args.at_to<std::vector<char>>(0)
+            | std::ranges::to<std::string>()};
+    return std::vector<char>(
+            std::istreambuf_iterator<char>(in),
+            std::istreambuf_iterator<char>());
+}
+
 std::shared_ptr<env> get_ns()
 {
     auto ns{env::make()};
@@ -108,6 +126,8 @@ std::shared_ptr<env> get_ns()
     ADD_INT_COMP(ns, <=);
     ADD_INT_COMP(ns, >);
     ADD_INT_COMP(ns, >=);
+    ns->set("read-string", mal_proc{core_read_string});
+    ADD_FUNC(ns, slurp);
     return ns;
 }
 
