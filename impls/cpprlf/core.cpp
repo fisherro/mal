@@ -2,6 +2,7 @@
 #include "printer.hpp"
 #include "types.hpp"
 #include <iostream>
+#include <ranges>
 #include <utility>
 
 #define ADD_INT_OP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(args.at_to<int>(0) OP args.at_to<int>(1)); }})
@@ -10,21 +11,48 @@
 
 #define ADD_FUNC(ENV, FUNC) ENV->set(std::string{#FUNC}, mal_proc{FUNC})
 
+std::string pr_str_true(const mal_type& m) { return pr_str(m, true); }
+std::string pr_str_false(const mal_type& m) { return pr_str(m, false); }
+
 mal_type bool_it(bool b)
 {
     if (b) return mal_true{};
     return mal_false{};
 }
 
+mal_type core_pr_str(const mal_list& args)
+{
+    return mal_list_get(args)
+        | std::views::transform(pr_str_true)
+        | std::views::join_with(' ')
+        | std::ranges::to<std::vector<char>>();
+}
+
+mal_type str(const mal_list& args)
+{
+    return mal_list_get(args)
+        | std::views::transform(pr_str_false)
+        | std::views::join
+        | std::ranges::to<std::vector<char>>();
+}
+
 mal_type prn(const mal_list& args)
 {
-    auto argv{mal_list_get(args)};
-    bool first{true};
-    for (auto& arg: argv) {
-        if (not std::exchange(first, false)) std::cout << ' ';
-        std::cout << pr_str(arg, true);
-    }
-    std::cout << '\n';
+    std::cout << (mal_list_get(args)
+        | std::views::transform(pr_str_true)
+        | std::views::join_with(' ')
+        | std::ranges::to<std::string>())
+        << '\n';
+    return mal_nil{};
+}
+
+mal_type println(const mal_list& args)
+{
+    std::cout << (mal_list_get(args)
+        | std::views::transform(pr_str_false)
+        | std::views::join_with(' ')
+        | std::ranges::to<std::string>())
+        << '\n';
     return mal_nil{};
 }
 
@@ -67,7 +95,10 @@ std::shared_ptr<env> get_ns()
     ADD_INT_OP(ns, -);
     ADD_INT_OP(ns, *);
     ADD_INT_OP(ns, /);
+    ns->set("pr-str", mal_proc{core_pr_str});
+    ADD_FUNC(ns, str);
     ADD_FUNC(ns, prn);
+    ADD_FUNC(ns, println);
     ADD_FUNC(ns, list);
     ns->set("list?", mal_proc{is_list});
     ns->set("empty?", mal_proc{is_empty});
