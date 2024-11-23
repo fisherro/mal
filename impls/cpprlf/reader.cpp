@@ -67,8 +67,11 @@ std::vector<std::string> tokenize(std::string_view sv)
     std::sregex_iterator iter(s.begin(), s.end(), regex);
     const std::sregex_iterator end;
     for (; iter != end; ++iter) {
-        tokens.push_back((*iter)[1].str());
+        std::string token{(*iter)[1].str()};
+        if ((token.size() > 0) and (';' == token[0])) continue;
+        tokens.push_back(token);
     }
+    if (tokens.empty()) throw comment_exception{};
     return tokens;
 }
 

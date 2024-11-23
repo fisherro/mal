@@ -176,6 +176,8 @@ int main()
             if (not std::getline(std::cin, line)) break;
             try {
                 std::cout << rep(line, repl_env) << '\n';
+            } catch (const comment_exception&) {
+                continue;
             } catch (const std::exception& e) {
                 std::cout << "Exception: " << e.what() << '\n';
             }
