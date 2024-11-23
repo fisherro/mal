@@ -57,6 +57,21 @@ private:
 template <typename T>
 concept is_mal_list = std::is_same_v<mal_list, std::remove_const_t<T>>;
 
+struct mal_map {
+    friend struct mal_map_helper;
+    bool operator==(const mal_map& that) const;
+
+    // The keys returned are the internal key format.
+    std::vector<std::string> inner_keys() const;
+
+private:
+    // The key is prefixed with 's' or 'k' for string or keyword.
+    // (Mal strings are std::vector<char>;
+    //  keywords are std::string that starts with colon.)
+    // The value is a mal_type wrapped in a std::any.
+    std::unordered_map<std::string, std::any> my_map;
+};
+
 // This wraps a C++ function. Mal functions are mal_func.
 struct mal_proc {
     friend struct mal_proc_helper;
@@ -154,6 +169,13 @@ void mal_list_add(mal_list& list, mal_type m);
 template <typename T>
 T mal_list::at_to(std::size_t i) const
 { return mal_to<T>(mal_list_at(*this, i)); }
+
+std::string mal_map_okey_to_ikey(const mal_type& outer_key);
+void mal_map_set(
+        mal_map& map, const mal_type& outer_key, const mal_type& value);
+std::optional<mal_type> mal_map_get(
+        const mal_map& map, const mal_type& outer_key);
+std::vector<std::pair<std::string, mal_type>> mal_map_pairs(const mal_map& map);
 
 mal_type mal_proc_call(const mal_proc& p, const mal_list& args);
 mal_type mal_func_ast(const mal_func& p);

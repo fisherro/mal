@@ -14,6 +14,13 @@ struct mal_list_helper {
     { return list.my_elements; }
 };
 
+struct mal_map_helper {
+    static auto& get(const mal_map& map)
+    { return map.my_map; }
+    static auto& get(mal_map& map)
+    { return map.my_map; }
+};
+
 struct mal_proc_helper {
     static auto& get(const mal_proc& p) { return p.my_function; }
 };
@@ -25,6 +32,7 @@ struct mal_func_helper {
 
 bool mal_list::operator==(const mal_list& that) const
 {
+    // This can be harsh since we have to unwrap all the std::any.
     auto this_vec{mal_list_get(*this)};
     auto that_vec{mal_list_get(that)};
     return this_vec == that_vec;
@@ -98,6 +106,74 @@ std::type_index get_mal_type_info(const mal_type& m)
         return std::type_index(typeid(arg));
     };
     return std::visit(get, m);
+}
+
+/*
+ * Keys (outer keys) can be either keywords or strings.
+ *
+ * Keywords are represented by a symbol (std::string) that begins with a colon.
+ * Strings are represented by std::vector<char>.
+ *
+ * The inner key is a string prefixed by 's' for string keys and 'k' for
+ * keyword keys.
+ */
+std::string mal_map_okey_to_ikey(const mal_type& outer_key)
+{
+    if (auto kw_ptr{std::get_if<std::string>(&outer_key)}; kw_ptr) {
+        if (kw_ptr->empty() or (':' != kw_ptr->at(0))) {
+            throw std::runtime_error{"bad map key type"};
+        }
+        return std::string(1, 'k') + *kw_ptr;
+    }
+    if (auto s_ptr{std::get_if<std::vector<char>>(&outer_key)}; s_ptr) {
+        std::string inner_key(1, 's');
+        inner_key.append(s_ptr->begin(), s_ptr->end());
+        return inner_key;
+    }
+    throw std::runtime_error{"bad map key type"};
+}
+
+bool mal_map::operator==(const mal_map& that) const
+{
+    // This can be harsh since we have to unwrap all the std::any.
+    return mal_map_pairs(*this) == mal_map_pairs(that);
+}
+
+std::vector<std::string> mal_map::inner_keys() const
+{
+    std::vector<std::string> some_keys;
+    for (auto& pair: my_map) {
+        some_keys.push_back(pair.first);
+    }
+    return some_keys;
+}
+
+std::vector<std::pair<std::string, mal_type>> mal_map_pairs(const mal_map& map)
+{
+    // May need to sort the output for op==?
+    auto& inner_map{mal_map_helper::get(map)};
+    std::vector<std::pair<std::string, mal_type>> pairs;
+    for (auto& [key, value]: inner_map) {
+        pairs.push_back(std::make_pair(key, std::any_cast<mal_type>(value)));
+    }
+    return pairs;
+}
+
+void mal_map_set(mal_map& map, const mal_type& outer_key, const mal_type& value)
+{
+    std::string inner_key{mal_map_okey_to_ikey(outer_key)};
+    auto& inner_map{mal_map_helper::get(map)};
+    inner_map.insert_or_assign(inner_key, value);
+}
+
+std::optional<mal_type> mal_map_get(
+        const mal_map& map, const mal_type& outer_key)
+{
+    std::string inner_key{mal_map_okey_to_ikey(outer_key)};
+    auto& inner_map{mal_map_helper::get(map)};
+    auto iter{inner_map.find(inner_key)};
+    if (inner_map.end() == iter) return std::nullopt;
+    return std::any_cast<mal_type>(iter->second);
 }
 
 mal_type mal_func_ast(const mal_func& f)
