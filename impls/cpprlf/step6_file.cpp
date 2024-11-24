@@ -16,6 +16,7 @@ auto read(std::string_view s)
     return read_str(s);
 }
 
+//TODO: Change a bunch of std::string parameters to string_view
 bool check_debug(std::string symbol, std::shared_ptr<env> current_env)
 {
     if (not current_env->has(symbol)) return false;
@@ -65,7 +66,7 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
             if (list->is_vector()) {
                 mal_list results{'['};
                 auto cpp_vector{mal_list_get(*list)};
-                for (auto& element: cpp_vector) {
+                for (auto element: cpp_vector) {
                     mal_list_add(results, eval(element, current_env));
                 }
                 return results;

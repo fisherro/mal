@@ -6,9 +6,6 @@
 #include <string>
 #include <unordered_map>
 
-//TODO Move member function definitions to env.cpp.
-//TODO The keys are actually symbols.
-// Once we have a string/symbol distinction, we'll need to fix this.
 struct env {
     static std::shared_ptr<env> make(
             std::shared_ptr<env> outer = std::shared_ptr<env>{});

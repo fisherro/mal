@@ -106,6 +106,63 @@ mal_type slurp(const mal_list& args)
             std::istreambuf_iterator<char>());
 }
 
+mal_type make_atom(const mal_list& args)
+{
+    return std::make_shared<atom>(mal_list_at(args, 0));
+}
+
+mal_type is_atom(const mal_list& args)
+{
+    auto atom_opt{try_mal_to<std::shared_ptr<atom>>(mal_list_at(args, 0))};
+    return bool_it(atom_opt.has_value());
+}
+
+mal_type deref(const mal_list& args)
+{
+    return args.at_to<std::shared_ptr<atom>>(0)->deref();
+}
+
+mal_type reset(const mal_list& args)
+{
+    auto atom_ptr{args.at_to<std::shared_ptr<atom>>(0)};
+    auto value{mal_list_at(args, 1)};
+    atom_ptr->reset(value);
+    return value;
+}
+
+// Probably belongs in types.hpp/.cpp
+mal_proc get_proc(const mal_type& m)
+{
+    if (auto func_ptr{std::get_if<mal_func>(&m)}; func_ptr) {
+        return func_ptr->proc();
+    }
+    if (auto proc_ptr{std::get_if<mal_proc>(&m)}; proc_ptr) {
+        return *proc_ptr;
+    } else {
+        //TODO: Unify the use of exceptions
+        throw std::runtime_error{"That's not invocable!"};
+    }
+}
+
+mal_type atom_swap(const mal_list& args)
+{
+    // If this were Clojure instead of mal, this should be mutex protected.
+    auto argv{mal_list_get(args)};
+    auto atom_ptr{mal_to<std::shared_ptr<atom>>(argv.at(0))};
+    auto proc{get_proc(argv.at(1))};
+
+    mal_list new_args;
+    mal_list_add(new_args, atom_ptr->deref());
+    std::ranges::subrange rest{argv.begin() + 2, argv.end()};
+    for (auto& element: rest) {
+        mal_list_add(new_args, element);
+    }
+
+    mal_type result{mal_proc_call(proc, new_args)};
+    atom_ptr->reset(result);
+    return result;
+}
+
 std::shared_ptr<env> get_ns()
 {
     auto ns{env::make()};
@@ -128,6 +185,11 @@ std::shared_ptr<env> get_ns()
     ADD_INT_COMP(ns, >=);
     ns->set("read-string", mal_proc{core_read_string});
     ADD_FUNC(ns, slurp);
+    ns->set("atom", mal_proc{make_atom});
+    ns->set("atom?", mal_proc{is_atom});
+    ADD_FUNC(ns, deref);
+    ns->set("reset!", mal_proc{reset});
+    ns->set("swap!", mal_proc{atom_swap});
     return ns;
 }
 

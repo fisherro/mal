@@ -90,6 +90,7 @@ struct mal_func {
     explicit mal_func(mal_list ast, std::shared_ptr<env> current_env);
     bool operator==(const mal_func&) const { return true; }
     std::shared_ptr<env> make_env(const mal_list& args) const;
+    mal_proc proc() const { return my_proc; }
     
 private:
     // This is the list of the function's parameter names.
@@ -101,6 +102,8 @@ private:
     // This is a "precompiled" form of the function to be used with apply.
     mal_proc my_proc{[](mal_list)->std::any{return mal_nil{};}};
 };
+
+struct atom;
 
 /*
  * To add a type to this, be sure...
@@ -119,8 +122,17 @@ using mal_type = std::variant<
     mal_true,
     mal_list,
     mal_map,
+    std::shared_ptr<atom>,
     mal_proc,
     mal_func>;
+
+struct atom {
+    atom(const mal_type& m): my_value{m} {}
+    mal_type deref() const { return my_value; }
+    void reset(const mal_type& m) { my_value = m; }
+private:
+    mal_type my_value;
+};
 
 struct mal_to_exception: std::runtime_error {
     using std::runtime_error::runtime_error;
@@ -174,8 +186,7 @@ T mal_list::at_to(std::size_t i) const
 
 std::string mal_map_okey_to_ikey(const mal_type& outer_key);
 mal_type mal_map_ikey_to_okey(std::string_view inner_key);
-void mal_map_set(
-        mal_map& map, const mal_type& outer_key, const mal_type& value);
+void mal_map_set(mal_map& map, const mal_type& outer_key, mal_type value);
 std::optional<mal_type> mal_map_get(
         const mal_map& map, const mal_type& outer_key);
 std::vector<std::pair<std::string, mal_type>> mal_map_pairs(const mal_map& map);

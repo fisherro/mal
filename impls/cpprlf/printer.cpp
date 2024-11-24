@@ -1,3 +1,4 @@
+#include "overloaded.hpp"
 #include "printer.hpp"
 #include "types.hpp"
 #include <algorithm>
@@ -6,9 +7,6 @@
 #include <ranges>
 #include <string>
 #include <variant>
-
-template <typename... Args>
-struct overloaded: Args... { using Args::operator()...; };
 
 std::string format_string(const std::vector<char>& v, bool print_readably)
 {
@@ -42,6 +40,7 @@ std::string pr_str(const mal_type& t, bool print_readably)
     // Need to forward declare print_mal_list:
     std::string print_mal_list(const mal_list&, bool);
     std::string print_mal_map(const mal_map&, bool);
+    std::string print_atom(const std::shared_ptr<atom>&, bool);
 
     return std::visit(overloaded{
         [](int v) { return std::to_string(v); },
@@ -56,9 +55,18 @@ std::string pr_str(const mal_type& t, bool print_readably)
         //TODO: Do we want to distinguish proc & func?
         [print_readably](const mal_map& m)
         { return print_mal_map(m, print_readably); },
+        [print_readably](const std::shared_ptr<atom>& atom)
+        { return print_atom(atom, print_readably); },
         [](mal_proc p) -> std::string { return "#<function>"; },
         [](mal_func f) -> std::string { return "#<function>"; },
     }, t);
+}
+
+std::string print_atom(const std::shared_ptr<atom>& atom, bool print_readably)
+{
+    return std::string("(atom ")
+        + pr_str(atom->deref(), print_readably)
+        + ")";
 }
 
 std::string print_mal_list(const mal_list& list, bool print_readably)

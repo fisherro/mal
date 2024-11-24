@@ -17,7 +17,7 @@ struct mal_list_helper {
 };
 
 struct mal_map_helper {
-    static auto& get(const mal_map& map)
+    static const auto& get(const mal_map& map)
     { return map.my_map; }
     static auto& get(mal_map& map)
     { return map.my_map; }
@@ -73,11 +73,11 @@ void mal_list_add(mal_list& list, mal_type m)
     mal_list_helper::get(list).push_back(m);
 }
 
-std::vector<mal_type> mal_list_get(const mal_list & list)
+std::vector<mal_type> mal_list_get(const mal_list& list)
 {
     auto& internal{mal_list_helper::get(list)};
     std::vector<mal_type> external;
-    for (auto& element: internal) {
+    for (auto element: internal) {
         external.push_back(std::any_cast<mal_type>(element));
     }
     return external;
@@ -179,13 +179,13 @@ std::vector<std::pair<std::string, mal_type>> mal_map_pairs(const mal_map& map)
     // May need to sort the output for op==?
     auto& inner_map{mal_map_helper::get(map)};
     std::vector<std::pair<std::string, mal_type>> pairs;
-    for (auto& [key, value]: inner_map) {
+    for (auto [key, value]: inner_map) {
         pairs.push_back(std::make_pair(key, std::any_cast<mal_type>(value)));
     }
     return pairs;
 }
 
-void mal_map_set(mal_map& map, const mal_type& outer_key, const mal_type& value)
+void mal_map_set(mal_map& map, const mal_type& outer_key, mal_type value)
 {
     std::string inner_key{mal_map_okey_to_ikey(outer_key)};
     auto& inner_map{mal_map_helper::get(map)};
@@ -209,13 +209,14 @@ mal_type mal_func_ast(const mal_func& f)
 
 std::shared_ptr<env> mal_func::make_env(const mal_list& args) const
 {
-    auto mal_to_string = [](const mal_type& m)
+    auto mal_to_string = [](const mal_type& m) -> std::string
     { return mal_to<std::string>(m); };
 
     // Create a new environment:
     auto new_env{env::make(my_env)};
     // Convert my_params to a vector<string>:
     auto params_vector{
+        //TODO This is where the crashing call to mal_list_get is
         mal_list_get(my_params)
         | std::views::transform(mal_to_string)
         | std::ranges::to<std::vector<std::string>>()
@@ -244,7 +245,7 @@ std::shared_ptr<env> mal_func::make_env(const mal_list& args) const
     if (params_vector.end() != amp_iter) {
         mal_list rest;
         std::ranges::subrange var_args{arg_iter, args_vector.end()};
-        for (auto& arg: var_args) {
+        for (auto arg: var_args) {
             mal_list_add(rest, arg);
         }
         new_env->set(rest_param, rest);

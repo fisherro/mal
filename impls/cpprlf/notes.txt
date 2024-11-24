@@ -21,3 +21,5 @@ nil true false ; ...are all distinct types without only themselves as values.
 (let* () a b) ; ...is an error. Only one thing allowed in the body.
 (fn* () a b)  ; ...is an error. Only one thing allowed in the body.
 
+Crash when calling proc in atom_swap.
+Appears to be within mal_list_get.
