@@ -167,10 +167,14 @@ std::string rep(std::string_view s, std::shared_ptr<env> current_env)
     return print(eval(read(s), current_env));
 }
 
-int main()
+int main(int argc, const char** argv)
 {
     try {
+        // Capture the command line args:
+        std::vector<std::string_view> args(argv + 1, argv + argc);
+        // Create the environment for the REPL:
         auto repl_env{env::make(get_ns())};
+        // Add some stuff to the environment:
         rep("(def! not (fn* (a) (if a false true)))", repl_env);
         auto core_eval = [repl_env](const mal_list& args) -> mal_type
         {
@@ -178,17 +182,38 @@ int main()
         };
         repl_env->set("eval", mal_proc{core_eval});
         rep("(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\nnil)\")))))", repl_env);
-        while (true) {
-            std::cout << "user> ";
-            std::string line;
-            if (not std::getline(std::cin, line)) break;
-            try {
-                std::cout << rep(line, repl_env) << '\n';
-            } catch (const comment_exception&) {
-                continue;
-            } catch (const std::exception& e) {
-                std::cout << "Exception: " << e.what() << '\n';
+        // If we didn't get any command line args, start the REPL.
+        if (args.empty()) {
+            rep("(def! *ARGV* (list))", repl_env);
+            while (true) {
+                std::cout << "user> ";
+                std::string line;
+                if (not std::getline(std::cin, line)) break;
+                try {
+                    std::cout << rep(line, repl_env) << '\n';
+                } catch (const comment_exception&) {
+                    continue;
+                } catch (const std::exception& e) {
+                    std::cout << "Exception: " << e.what() << '\n';
+                }
             }
+        } else {
+            // Add the command line arguments to *ARGV*.
+            // Don't include the filename of the program to run.
+            std::string argv_string{"(def! *ARGV* (list"};
+            std::ranges::subrange argv_rest{args.begin() + 1, args.end()};
+            for (auto arg: argv_rest) {
+                argv_string += ' ';
+                argv_string += encode_string(arg);
+            }
+            argv_string += "))";
+            std::cout << argv_string << '\n';
+            rep(argv_string, repl_env);
+            // Run the file given on the command line.
+            std::string load_string{"(load-file "};
+            load_string += encode_string(args.at(0));
+            load_string += ')';
+            std::cout << rep(load_string, repl_env) << '\n';
         }
     } catch (const std::exception& e) {
         std::cout << "\nEXCEPTION: " << e.what() << '\n';

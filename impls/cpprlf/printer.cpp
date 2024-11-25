@@ -8,7 +8,9 @@
 #include <string>
 #include <variant>
 
-std::string format_string(const std::vector<char>& v, bool print_readably)
+std::string format_string(
+        const std::ranges::range auto& r,
+        bool print_readably)
 {
     std::string s;
     if (print_readably) {
@@ -23,16 +25,21 @@ std::string format_string(const std::vector<char>& v, bool print_readably)
                 { '\\', "\\\\" },
         };
         s += '"';
-        for (char c: v) {
+        for (char c: r) {
             auto iter{map.find(c)};
             if (map.end() == iter) s.push_back(c);
             else s += iter->second;
         }
         s += '"';
     } else {
-        s.assign(v.begin(), v.end());
+        s.assign(r.begin(), r.end());
     }
     return s;
+}
+
+std::string encode_string(std::string_view s)
+{
+    return format_string(s, true);
 }
 
 std::string pr_str(const mal_type& t, bool print_readably)
