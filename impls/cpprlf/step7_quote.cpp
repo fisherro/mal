@@ -24,6 +24,80 @@ bool check_debug(std::string symbol, std::shared_ptr<env> current_env)
     return mal_truthy(debug_eval);
 }
 
+bool is_head_this_symbol(const mal_list& list, const std::string& symbol)
+{
+    if (list.empty()) return false;
+    auto head_opt{try_mal_to<std::string>(mal_list_at(list, 0))};
+    if (not head_opt) return false;
+    return symbol == *head_opt;
+}
+
+bool is_head_this_symbol(const mal_type& object, const std::string& symbol)
+{
+    auto list_ptr{std::get_if<mal_list>(&object)};
+    if (not list_ptr) return false;
+    return is_head_this_symbol(*list_ptr, symbol);
+}
+
+bool is_head_this_symbol(
+        const std::vector<mal_type>& vec,
+        const std::string& symbol)
+{
+    if (vec.empty()) return false;
+    auto head_opt{try_mal_to<std::string>(vec.at(0))};
+    if (not head_opt) return false;
+    return symbol == *head_opt;
+}
+
+mal_list make_list(
+        const std::string& head,
+        const mal_type& last)
+{
+    mal_list list;
+    mal_list_add(list, head);
+    mal_list_add(list, last);
+    return list;
+}
+
+mal_list make_list(
+        const std::string& head,
+        const mal_type& second, 
+        const mal_type& last)
+{
+    mal_list list{make_list(head, second)};
+    mal_list_add(list, last);
+    return list;
+}
+
+mal_type quasiquote(mal_type ast)
+{
+    if (auto list_ptr{std::get_if<mal_list>(&ast)}; list_ptr) {
+        if (is_head_this_symbol(*list_ptr, "unquote")) {
+            return mal_list_at(*list_ptr, 1);
+        }
+        auto vec{mal_list_get(*list_ptr)};
+        mal_type result;
+        for (auto& elt: vec | std::views::reverse) {
+            if (is_head_this_symbol(elt, "splice-unquote")) {
+                result = make_list(
+                        "concat",
+                        mal_list_at(mal_to<mal_list>(elt), 1),
+                        result);
+            } else {
+                result = make_list("cons", quasiquote(elt), result);
+            }
+        }
+        return result;
+    }
+    if (auto symbol_ptr{std::get_if<std::string>(&ast)}; symbol_ptr) {
+        return make_list("quote", ast);
+    }
+    if (auto map_ptr{std::get_if<mal_map>(&ast)}; map_ptr) {
+        return make_list("quote", ast);
+    }
+    return ast; // need to quote?
+}
+
 //Note: We passed the "too much recursion" test before implementing TCO.
 //      Presumably gcc did TCO for us.
 //      But we'll go ahead and do it explicitly.
@@ -134,6 +208,11 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                 }
                 if ("quote" == *symbol) {
                     return mal_list_at(*list, 1);
+                }
+                if ("quasiquote" == *symbol) {
+                    // TCO:
+                    ast = quasiquote(mal_list_at(*list, 1));
+                    continue;
                 }
             }
             const mal_type call_me{eval(head, current_env)};
