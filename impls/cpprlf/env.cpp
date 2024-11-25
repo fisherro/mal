@@ -33,14 +33,16 @@ mal_type env::get(const std::string& key) const
 
 void env::dump(std::ostream& out) const
 {
-    out << "env " << this << '\n';
+    const std::string prefix{"EVAL DUMP: "};
+    out << prefix << "env " << this << '\n';
     for (auto& [key, value]: my_data) {
-        out << key << ":"
+        out << prefix
+            << key << ":"
             << get_mal_type(value) << ":"
             << pr_str(value, true) << '\n';
     }
     if (my_outer) {
-        out << "next environment...\n";
+        out << prefix << "next environment...\n";
         my_outer->dump(out);
     }
 }

@@ -72,6 +72,9 @@ mal_list make_list(
 mal_type quasiquote(mal_type ast)
 {
     if (auto list_ptr{std::get_if<mal_list>(&ast)}; list_ptr) {
+        if (list_ptr->is_map()) {
+            return make_list("quote", ast);
+        }
         if (is_head_this_symbol(*list_ptr, "unquote")) {
             return mal_list_at(*list_ptr, 1);
         }
@@ -95,7 +98,11 @@ mal_type quasiquote(mal_type ast)
     if (auto map_ptr{std::get_if<mal_map>(&ast)}; map_ptr) {
         return make_list("quote", ast);
     }
+#if 1
     return ast; // need to quote?
+#else
+    return make_list("quote", ast);
+#endif
 }
 
 //Note: We passed the "too much recursion" test before implementing TCO.
@@ -104,6 +111,8 @@ mal_type quasiquote(mal_type ast)
 mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
 {
     while (true) {
+        //TODO: Maybe need to be able to set DEBUG-EVAL before functions are
+        //      defined in main?
         if (check_debug("DEBUG-EVAL", current_env)) {
             std::cout << "EVAL: " << pr_str(ast, true) << '\n';
             if (check_debug("DEBUG-EVAL-ENV", current_env)) {
