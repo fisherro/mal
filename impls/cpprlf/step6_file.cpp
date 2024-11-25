@@ -207,13 +207,12 @@ int main(int argc, const char** argv)
                 argv_string += encode_string(arg);
             }
             argv_string += "))";
-            std::cout << argv_string << '\n';
             rep(argv_string, repl_env);
             // Run the file given on the command line.
             std::string load_string{"(load-file "};
             load_string += encode_string(args.at(0));
             load_string += ')';
-            std::cout << rep(load_string, repl_env) << '\n';
+            rep(load_string, repl_env);
         }
     } catch (const std::exception& e) {
         std::cout << "\nEXCEPTION: " << e.what() << '\n';

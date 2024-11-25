@@ -182,6 +182,13 @@ mal_type read_form(reader& r)
     if (not ('\0' == opener)) {
         return read_list(r, opener);
     }
+    if ("@" == *token) {
+        r.next(); // Consume @.
+        mal_list list;
+        mal_list_add(list, std::string{"deref"});
+        mal_list_add(list, read_form(r));
+        return list;
+    }
     return read_atom(r);
 }
 
