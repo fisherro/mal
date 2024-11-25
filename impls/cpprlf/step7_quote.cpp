@@ -74,12 +74,12 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
             if (list->empty()) return ast;
             const mal_type head{mal_list_at(*list, 0)};
             if (auto symbol{std::get_if<std::string>(&head)}; symbol) {
-                if (*symbol == "def!") {
+                if ("def!" == *symbol) {
                     mal_type value{eval(mal_list_at(*list, 2), current_env)};
                     current_env->set(list->at_to<std::string>(1), value);
                     return value;
                 }
-                if (*symbol == "let*") {
+                if ("let*" == *symbol) {
                     mal_list args{list->at_to<mal_list>(1)};
                     auto argsv{mal_list_get(args)};
                     std::ranges::reverse(argsv);
@@ -98,7 +98,7 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                     current_env = new_env;
                     continue;
                 }
-                if (*symbol == "do") {
+                if ("do" == *symbol) {
                     auto vector{mal_list_get(*list)};
                     if (vector.size() < 2) {
                         throw std::runtime_error{"empty 'do'!"};
@@ -114,7 +114,7 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                     ast = vector.back();
                     continue;
                 }
-                if (*symbol == "if") {
+                if ("if" == *symbol) {
                     mal_type condition{mal_list_at(*list, 1)};
                     if (mal_truthy(eval(condition, current_env))) {
                         // TCO:
@@ -129,8 +129,11 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                         continue;
                     }
                 }
-                if (*symbol == "fn*") {
+                if ("fn*" == *symbol) {
                     return mal_func{*list, current_env};
+                }
+                if ("quote" == *symbol) {
+                    return mal_list_at(*list, 1);
                 }
             }
             const mal_type call_me{eval(head, current_env)};
