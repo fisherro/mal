@@ -13,6 +13,10 @@ Lists and vectors are mostly the same. Differences list here as I discover them:
 	- Lists, in many contexts, will be evaluated as an application;
 	  Vectors won't.
 
+There's probably a huge number of unneeded copies in this code.
+
+The mal_func object could only hold its full ast and parsing out the parameter list and body and building the closure could be deferred until needed. But if the function gets called multiple times, it's good to have already done those things up-front. There could also be a just-in-time and memoize approach to get the best of both options.
+
 Open docs/index.html in a web browser for some docs. But it doesn't cover some of the gotchas...like...
 
 So far, numbers are only integers.

@@ -11,6 +11,38 @@
 #include <variant>
 #include <vector>
 
+#ifdef MAL_FUNC_DEBUG
+#include <iostream>
+#endif
+
+#ifdef MAL_FUNC_DEBUG
+struct debug_me {
+    void print(std::string_view mf, const debug_me* that = nullptr) const
+    {
+        std::cout << "debug_me("
+            << s
+            << "): "
+            << mf
+            << " ("
+            << reinterpret_cast<const void*>(this);
+        if (that) {
+            std::cout << " <- "
+                << reinterpret_cast<const void*>(that);
+        }
+        std::cout << ")\n";
+    }
+    std::string s;
+    debug_me(const std::string& s): s{s} { print("ctor"); }
+    debug_me(const debug_me& that): s{that.s} { print("copy ctor", &that); }
+    debug_me(debug_me&& that): s{that.s} { print("move ctor", &that); }
+    debug_me& operator=(const debug_me& that)
+    { s = that.s; print("copy op=", &that); return *this; }
+    debug_me& operator=(debug_me&& that)
+    { s = that.s; print("move op=", &that); return *this; }
+    ~debug_me() { print("dtor"); }
+};
+#endif
+
 struct mal_nil { bool operator==(mal_nil) const {return true;} };
 struct mal_false { bool operator==(mal_false) const {return true;} };
 struct mal_true { bool operator==(mal_true) const {return true;} };
@@ -85,13 +117,14 @@ private:
 // Forward declaration of env for use by mal_func:
 struct env;
 
+// The irony of the name "mal_func"...^_^
 struct mal_func {
     friend struct mal_func_helper;
     explicit mal_func(mal_list ast, std::shared_ptr<env> current_env);
     bool operator==(const mal_func&) const { return true; }
     std::shared_ptr<env> make_env(const mal_list& args) const;
-    mal_proc proc() const { return my_proc; }
-    
+    mal_proc proc();
+
 private:
     // This is the list of the function's parameter names.
     mal_list my_params;
@@ -99,8 +132,9 @@ private:
     std::any my_ast;
     // This is the "closed over" environment:
     std::shared_ptr<env> my_env;
-    // This is a "precompiled" form of the function to be used with apply.
-    mal_proc my_proc{[](mal_list)->std::any{return mal_nil{};}};
+#ifdef MAL_FUNC_DEBUG
+    debug_me my_debug;
+#endif
 };
 
 struct atom;
@@ -126,6 +160,7 @@ using mal_type = std::variant<
     mal_proc,
     mal_func>;
 
+// Wouldn't "box" be a better name for this than "atom"?
 struct atom {
     atom(const mal_type& m): my_value{m} {}
     mal_type deref() const { return my_value; }

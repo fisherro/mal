@@ -131,7 +131,7 @@ mal_type reset(const mal_list& args)
 }
 
 // Probably belongs in types.hpp/.cpp
-mal_proc get_proc(const mal_type& m)
+mal_proc get_proc(mal_type m)
 {
     if (auto func_ptr{std::get_if<mal_func>(&m)}; func_ptr) {
         return func_ptr->proc();

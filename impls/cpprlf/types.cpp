@@ -209,14 +209,24 @@ mal_type mal_func_ast(const mal_func& f)
 
 std::shared_ptr<env> mal_func::make_env(const mal_list& args) const
 {
+#ifdef MAL_FUNC_DEBUG
+    std::cout << __func__ << ": this = " << reinterpret_cast<const void*>(&my_debug) << '\n';
+#endif
+
     auto mal_to_string = [](const mal_type& m) -> std::string
-    { return mal_to<std::string>(m); };
+    {
+        try { return mal_to<std::string>(m); }
+        catch (const mal_to_exception& e) {
+            throw mal_to_exception{
+                std::string{e.what()}
+                + "; A mal_func parameter was not a symbol!"};
+        }
+    };
 
     // Create a new environment:
     auto new_env{env::make(my_env)};
     // Convert my_params to a vector<string>:
     auto params_vector{
-        //TODO This is where the crashing call to mal_list_get is
         mal_list_get(my_params)
         | std::views::transform(mal_to_string)
         | std::ranges::to<std::vector<std::string>>()
@@ -257,9 +267,15 @@ mal_func::mal_func(mal_list ast, std::shared_ptr<env> current_env):
     my_params{ast.at_to<mal_list>(1)},
     my_ast{mal_list_at(ast, 2)},
     my_env{current_env}
+#ifdef MAL_FUNC_DEBUG
+    ,my_debug{pr_str(my_params, true) + pr_str(mal_list_at(ast, 2), true)}
+#endif
+{}
+
+mal_proc mal_func::proc()
 {
-    // Could we define this in the initializer list? Maybe? Does it matter?
-    auto closure = [=, this](const mal_list& args) -> mal_type
+    // We capture this by value. Otherwise, it gets destroyed before we use it.
+    auto closure = [=, *this](const mal_list& args) -> mal_type
     {
         // Declaration of eval.
         // I don't currently have an appropriate header file to put this in.
@@ -268,7 +284,6 @@ mal_func::mal_func(mal_list ast, std::shared_ptr<env> current_env):
         auto new_env{make_env(args)};
         return eval(mal_func_ast(*this), new_env);
     };
-    my_proc = mal_proc{closure};
+    return mal_proc{closure};
 }
-
 
