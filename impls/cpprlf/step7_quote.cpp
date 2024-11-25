@@ -265,6 +265,23 @@ int main(int argc, const char** argv)
         std::vector<std::string_view> args(argv + 1, argv + argc);
         // Create the environment for the REPL:
         auto repl_env{env::make(get_ns())};
+        // Check for flags:
+        //(Not sure if this is a good idea...)
+        for (auto arg: args) {
+            if (arg.starts_with("--")) {
+                auto equals{arg.find('=')};
+                if (arg.npos == equals) {
+                    auto symbol{arg.substr(2)};
+                    repl_env->set(symbol, mal_true{});
+                } else {
+                    auto symbol{arg.substr(2, equals - 2)};
+                    auto value{arg.substr(equals + 1)
+                        | std::ranges::to<std::vector<char>>()};
+                    repl_env->set(symbol, value);
+                }
+            }
+        }
+        std::erase_if(args, [](auto arg){ return arg.starts_with("--"); });
         // Add some stuff to the environment:
         rep("(def! not (fn* (a) (if a false true)))", repl_env);
         auto core_eval = [repl_env](const mal_list& args) -> mal_type

@@ -4,15 +4,16 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 struct env {
     static std::shared_ptr<env> make(
             std::shared_ptr<env> outer = std::shared_ptr<env>{});
 
-    bool has(const std::string& key) const;
-    void set(const std::string& key, mal_type value);
-    mal_type get(const std::string& key) const;
+    bool has(std::string_view key) const;
+    void set(std::string_view key, mal_type value);
+    mal_type get(std::string_view key) const;
     void dump(std::ostream& out) const;
     
 private:
