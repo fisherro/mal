@@ -214,8 +214,22 @@ mal_type rest(const mal_list& args)
     auto maybe_list{mal_list_at(args, 0)};
     if (auto nil_ptr{get_if<mal_nil>(&maybe_list)}; nil_ptr) return mal_list{};
     auto list{mal_to<mal_list>(maybe_list)};
-    if (list.empty()) return list;
-    return list.rest();
+    if (list.empty()) {
+        // Even when passed a vector, we return a list.
+        list.become_list();
+        return list;
+    }
+    auto result{list.rest()};
+    // Even when passed a vector, we return a list.
+    result.become_list();
+    return result;
+}
+
+mal_type is_macro(const mal_list& args)
+{
+    auto func_opt{try_mal_to<mal_func>(mal_list_at(args, 0))};
+    if (not func_opt) return mal_false{};
+    return bool_it(func_opt->is_macro());
 }
 
 std::shared_ptr<env> get_ns()
@@ -251,6 +265,7 @@ std::shared_ptr<env> get_ns()
     ADD_FUNC(ns, nth);
     ADD_FUNC(ns, first);
     ADD_FUNC(ns, rest);
+    ns->set("macro?", mal_proc{is_macro});
     return ns;
 }
 

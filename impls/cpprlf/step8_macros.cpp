@@ -323,6 +323,7 @@ int main(int argc, const char** argv)
         };
         repl_env->set("eval", mal_proc{core_eval});
         rep("(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\nnil)\")))))", repl_env);
+        rep("(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))", repl_env);
         // If we didn't get any command line args, start the REPL.
         if (args.empty()) {
             rep("(def! *ARGV* (list))", repl_env);
