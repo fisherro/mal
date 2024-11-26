@@ -81,6 +81,9 @@ struct mal_list {
     template <typename T>
     T at_to(std::size_t i) const;
 
+    void become_list() { my_opener = '('; }
+    void become_vector() { my_opener = '['; }
+
 private:
     // Used to distinguish lists, vectors, & unevaluated maps.
     char my_opener{'('};
