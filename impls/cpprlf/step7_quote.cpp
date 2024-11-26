@@ -82,7 +82,7 @@ mal_type quasiquote(mal_type ast)
             return mal_list_at(*list_ptr, 1);
         }
         auto vec{mal_list_get(*list_ptr)};
-        mal_type result;
+        mal_type result{mal_list{}};
         for (auto& elt: vec | std::views::reverse) {
             if (is_head_this_symbol(elt, "splice-unquote")) {
                 result = make_list(
