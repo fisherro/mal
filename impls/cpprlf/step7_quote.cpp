@@ -78,7 +78,9 @@ mal_type quasiquote(mal_type ast)
         if (list_ptr->is_map()) {
             return make_list("quote", ast);
         }
-        if (is_head_this_symbol(*list_ptr, "unquote")) {
+        if ((not list_ptr->is_vector())
+            and is_head_this_symbol(*list_ptr, "unquote"))
+        {
             return mal_list_at(*list_ptr, 1);
         }
         auto vec{mal_list_get(*list_ptr)};
@@ -92,6 +94,9 @@ mal_type quasiquote(mal_type ast)
             } else {
                 result = make_list("cons", quasiquote(elt), result);
             }
+        }
+        if (list_ptr->is_vector()) {
+            return make_list("vec", result);
         }
         return result;
     }
