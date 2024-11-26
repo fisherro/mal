@@ -186,6 +186,18 @@ mal_type concat(const mal_list& args)
     return result;
 }
 
+mal_type vec(const mal_list& args)
+{
+    auto arg{args.at_to<mal_list>(0)};
+    if (arg.is_vector()) return arg;
+    mal_list v{'['};
+    auto elements{mal_list_get(arg)};
+    for (const auto& element: elements) {
+        mal_list_add(v, element);
+    }
+    return v;
+}
+
 std::shared_ptr<env> get_ns()
 {
     auto ns{env::make()};
@@ -215,6 +227,7 @@ std::shared_ptr<env> get_ns()
     ns->set("swap!", mal_proc{atom_swap});
     ADD_FUNC(ns, cons);
     ADD_FUNC(ns, concat);
+    ADD_FUNC(ns, vec);
     return ns;
 }
 
