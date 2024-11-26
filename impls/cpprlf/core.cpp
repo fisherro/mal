@@ -189,13 +189,8 @@ mal_type concat(const mal_list& args)
 mal_type vec(const mal_list& args)
 {
     auto arg{args.at_to<mal_list>(0)};
-    if (arg.is_vector()) return arg;
-    mal_list v{'['};
-    auto elements{mal_list_get(arg)};
-    for (const auto& element: elements) {
-        mal_list_add(v, element);
-    }
-    return v;
+    if (not arg.is_vector()) arg.become_vector();
+    return arg;
 }
 
 std::shared_ptr<env> get_ns()

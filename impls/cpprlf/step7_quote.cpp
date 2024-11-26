@@ -106,7 +106,6 @@ mal_type quasiquote(mal_type ast)
             }
         }
         if (list_ptr->is_vector()) {
-            //TODO: Use become_list?
             return make_list("vec", result);
         }
         return result;
