@@ -72,6 +72,9 @@ mal_list make_list(
 mal_type quasiquote(mal_type ast)
 {
     if (auto list_ptr{std::get_if<mal_list>(&ast)}; list_ptr) {
+        if (list_ptr->empty()) {
+            return ast;
+        }
         if (list_ptr->is_map()) {
             return make_list("quote", ast);
         }
@@ -111,8 +114,6 @@ mal_type quasiquote(mal_type ast)
 mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
 {
     while (true) {
-        //TODO: Maybe need to be able to set DEBUG-EVAL before functions are
-        //      defined in main?
         if (check_debug("DEBUG-EVAL", current_env)) {
             std::cout << "EVAL: " << pr_str(ast, true) << '\n';
             if (check_debug("DEBUG-EVAL-ENV", current_env)) {
