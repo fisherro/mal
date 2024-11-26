@@ -275,6 +275,24 @@ mal_type apply(const mal_list& args)
     return mal_proc_call(p, apply_args);
 }
 
+mal_type map(const mal_list& args)
+{
+    //TODO: Could refactor out getting the mal_proc from apply and here.
+    auto argv{mal_list_get(args)};
+    mal_proc p{[](const mal_list& args){ return mal_nil{}; }};
+    auto fptr{std::get_if<mal_func>(&argv.front())};
+    if (fptr) p = fptr->proc();
+    else p = std::get<mal_proc>(argv.front());
+    auto v{mal_list_get(mal_to<mal_list>(argv.at(1)))};
+    mal_list results;
+    for (auto& element: v) {
+        mal_list list;
+        mal_list_add(list, element);
+        mal_list_add(results, mal_proc_call(p, list));
+    }
+    return results;
+}
+
 std::shared_ptr<env> get_ns()
 {
     auto ns{env::make()};
@@ -311,6 +329,7 @@ std::shared_ptr<env> get_ns()
     ns->set("macro?", mal_proc{is_macro});
     ns->set("throw", mal_proc{mal_throw});
     ADD_FUNC(ns, apply);
+    ADD_FUNC(ns, map);
     return ns;
 }
 
