@@ -247,7 +247,16 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                     continue;
                 }
             }
+            // apply
             const mal_type call_me{eval(head, current_env)};
+
+            if (auto func_ptr{std::get_if<mal_func>(&call_me)}; func_ptr) {
+                if (func_ptr->is_macro()) {
+                    ast = mal_proc_call(func_ptr->proc(), list->rest());
+                    continue;
+                }
+            }
+
             mal_list evaluated_args;
             auto vector{mal_list_get(*list)};
             std::ranges::subrange rest{vector.begin() + 1, vector.end()};
@@ -255,6 +264,7 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                 mal_type evaluated{eval(arg, current_env)};
                 mal_list_add(evaluated_args, evaluated);
             }
+
             if (auto proc_ptr{std::get_if<mal_proc>(&call_me)}; proc_ptr) {
                 return mal_proc_call(*proc_ptr, evaluated_args);
             }

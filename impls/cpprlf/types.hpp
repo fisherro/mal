@@ -65,6 +65,8 @@ struct mal_list {
     bool empty() const { return my_elements.empty(); }
     std::size_t size() const { return my_elements.size(); }
 
+    mal_list rest() const;
+
     char get_opener() const { return my_opener; }
     char get_closer() const
     {
@@ -126,7 +128,7 @@ struct mal_func {
     explicit mal_func(mal_list ast, std::shared_ptr<env> current_env);
     bool operator==(const mal_func&) const { return true; }
     std::shared_ptr<env> make_env(const mal_list& args) const;
-    mal_proc proc();
+    mal_proc proc() const;
     bool is_macro() const { return _is_macro; }
     void become_macro() { _is_macro = true; }
 

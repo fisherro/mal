@@ -83,6 +83,15 @@ std::vector<mal_type> mal_list_get(const mal_list& list)
     return external;
 }
 
+//TODO: Look for older code that could have used this.
+mal_list mal_list::rest() const
+{
+    if (empty()) return *this;
+    mal_list copy{*this};
+    copy.my_elements.erase(copy.my_elements.begin());
+    return copy;
+}
+
 mal_type mal_proc_call(const mal_proc& p, const mal_list& args)
 {
     return std::any_cast<mal_type>(mal_proc_helper::get(p)(args));
@@ -272,7 +281,7 @@ mal_func::mal_func(mal_list ast, std::shared_ptr<env> current_env):
 #endif
 {}
 
-mal_proc mal_func::proc()
+mal_proc mal_func::proc() const
 {
     // We capture this by value. Otherwise, it gets destroyed before we use it.
     auto closure = [=, *this](const mal_list& args) -> mal_type
