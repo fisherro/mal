@@ -168,6 +168,18 @@ using mal_type = std::variant<
     mal_proc,
     mal_func>;
 
+struct mal_exception {
+#if 0
+    mal_exception(mal_type m): data{m} {}
+    mal_type get() const { return data; }
+    mal_type data;
+#else
+    mal_exception(mal_type m): data{std::make_shared<mal_type>(m)} {}
+    mal_type get() const { return *data; }
+    std::shared_ptr<mal_type> data;
+#endif
+};
+
 // Wouldn't "box" be a better name for this than "atom"?
 struct atom {
     atom(const mal_type& m): my_value{m} {}

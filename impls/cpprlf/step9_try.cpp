@@ -250,13 +250,17 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                     // (try* A (catch* B C))
                     // Some sort of destructuring feature would be nice here.
                     auto a{mal_list_at(*list, 1)};
-                    std::vector<char> what;
+                    mal_type what;
                     try {
                         // Evaluate A.
                         return eval(a, current_env);
                     } catch (const std::exception& e) {
                         what = std::string_view{e.what()}
                         | std::ranges::to<std::vector<char>>();
+                    } catch (const mal_type& m) {
+                        what = m;
+                    } catch (const mal_exception& e) {
+                        what = e.get();
                     }
                     auto catcher{list->at_to<mal_list>(2)};
                     //TODO: Check that first element is "catch*"?

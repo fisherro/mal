@@ -197,6 +197,13 @@ mal_type nth(const mal_list& args)
 {
     auto list{args.at_to<mal_list>(0)};
     auto n{args.at_to<int>(1)};
+    if (n >= int(list.size())) {
+        throw std::runtime_error{
+            "nth out-of-bounds index; n = "
+            + std::to_string(n)
+            + "; bounds = "
+            + std::to_string(list.size())};
+    }
     return mal_list_at(list, n);
 }
 
@@ -230,6 +237,21 @@ mal_type is_macro(const mal_list& args)
     auto func_opt{try_mal_to<mal_func>(mal_list_at(args, 0))};
     if (not func_opt) return mal_false{};
     return bool_it(func_opt->is_macro());
+}
+
+mal_type mal_throw(const mal_list& args)
+{
+#if 0
+    // Calls terminate
+    throw mal_list_at(args, 0);
+#endif
+#if 1
+    throw std::runtime_error{pr_str(mal_list_at(args, 0), false)};
+#endif
+#if 0
+    // Calls terminate
+    throw mal_exception{args};
+#endif
 }
 
 std::shared_ptr<env> get_ns()
@@ -266,6 +288,7 @@ std::shared_ptr<env> get_ns()
     ADD_FUNC(ns, first);
     ADD_FUNC(ns, rest);
     ns->set("macro?", mal_proc{is_macro});
+    ns->set("throw", mal_proc{mal_throw});
     return ns;
 }
 
