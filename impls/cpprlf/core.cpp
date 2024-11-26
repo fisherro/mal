@@ -193,6 +193,31 @@ mal_type vec(const mal_list& args)
     return arg;
 }
 
+mal_type nth(const mal_list& args)
+{
+    auto list{args.at_to<mal_list>(0)};
+    auto n{args.at_to<int>(1)};
+    return mal_list_at(list, n);
+}
+
+mal_type first(const mal_list& args)
+{
+    auto maybe_list{mal_list_at(args, 0)};
+    if (auto nil_ptr{get_if<mal_nil>(&maybe_list)}; nil_ptr) return maybe_list;
+    auto list{mal_to<mal_list>(maybe_list)};
+    if (list.empty()) return mal_nil{};
+    return mal_list_at(list, 0);
+}
+
+mal_type rest(const mal_list& args)
+{
+    auto maybe_list{mal_list_at(args, 0)};
+    if (auto nil_ptr{get_if<mal_nil>(&maybe_list)}; nil_ptr) return mal_list{};
+    auto list{mal_to<mal_list>(maybe_list)};
+    if (list.empty()) return list;
+    return list.rest();
+}
+
 std::shared_ptr<env> get_ns()
 {
     auto ns{env::make()};
@@ -223,6 +248,9 @@ std::shared_ptr<env> get_ns()
     ADD_FUNC(ns, cons);
     ADD_FUNC(ns, concat);
     ADD_FUNC(ns, vec);
+    ADD_FUNC(ns, nth);
+    ADD_FUNC(ns, first);
+    ADD_FUNC(ns, rest);
     return ns;
 }
 
