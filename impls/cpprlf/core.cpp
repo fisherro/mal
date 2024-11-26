@@ -198,6 +198,7 @@ mal_type nth(const mal_list& args)
     auto list{args.at_to<mal_list>(0)};
     auto n{args.at_to<int>(1)};
     if (n >= int(list.size())) {
+        // The tests didn't like the text given by the standard exception.
         throw std::runtime_error{
             "nth out-of-bounds index; n = "
             + std::to_string(n)
@@ -254,6 +255,26 @@ mal_type mal_throw(const mal_list& args)
 #endif
 }
 
+mal_type apply(const mal_list& args)
+{
+    auto argv{mal_list_get(args)};
+    mal_proc p{[](const mal_list& args){ return mal_nil{}; }};
+    auto fptr{std::get_if<mal_func>(&argv.front())};
+    if (fptr) p = fptr->proc();
+    else p = std::get<mal_proc>(argv.front());
+    mal_list apply_args;
+    std::ranges::subrange middle{argv.begin() + 1, argv.end() - 1};
+    for (auto arg: middle) {
+        //TODO: Need to evaluate args?
+        mal_list_add(apply_args, arg);
+    }
+    auto rest{mal_list_get(std::get<mal_list>(argv.back()))};
+    for (auto arg: rest) {
+        mal_list_add(apply_args, arg);
+    }
+    return mal_proc_call(p, apply_args);
+}
+
 std::shared_ptr<env> get_ns()
 {
     auto ns{env::make()};
@@ -289,6 +310,7 @@ std::shared_ptr<env> get_ns()
     ADD_FUNC(ns, rest);
     ns->set("macro?", mal_proc{is_macro});
     ns->set("throw", mal_proc{mal_throw});
+    ADD_FUNC(ns, apply);
     return ns;
 }
 
