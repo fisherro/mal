@@ -127,8 +127,11 @@ struct mal_func {
     bool operator==(const mal_func&) const { return true; }
     std::shared_ptr<env> make_env(const mal_list& args) const;
     mal_proc proc();
+    bool is_macro() const { return _is_macro; }
+    void become_macro() { _is_macro = true; }
 
 private:
+    bool _is_macro{false};
     // This is the list of the function's parameter names.
     mal_list my_params;
     // This is the body of the function. It is actually a mal_type.
