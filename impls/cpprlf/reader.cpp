@@ -9,6 +9,14 @@
 #include <string_view>
 #include <vector>
 
+const std::unordered_map<std::string, std::string> reader_macros{
+    { "@", "deref" },
+    { "'", "quote" },
+    { "`", "quasiquote" },
+    { "~", "unquote" },
+    { "~@", "splice-unquote" },
+};
+
 struct reader {
     reader(std::vector<std::string> tokens):
         my_tokens{std::move(tokens)}, my_position{0} {}
@@ -182,10 +190,11 @@ mal_type read_form(reader& r)
     if (not ('\0' == opener)) {
         return read_list(r, opener);
     }
-    if ("@" == *token) {
-        r.next(); // Consume @.
+    auto rm_iter{reader_macros.find(*token)};
+    if (reader_macros.end() != rm_iter) {
+        r.next(); // Consume the token.
         mal_list list;
-        mal_list_add(list, std::string{"deref"});
+        mal_list_add(list, rm_iter->second);
         mal_list_add(list, read_form(r));
         return list;
     }
