@@ -470,6 +470,28 @@ mal_type vals(const mal_list& args)
     return results;
 }
 
+mal_type core_readline(const mal_list& args)
+{
+    auto prompt{args.at_to<std::vector<char>>(0)};
+    std::cout << (prompt | std::ranges::to<std::string>());
+    std::string line;
+    if (not std::getline(std::cin, line)) return mal_nil{};
+    return line | std::ranges::to<std::vector<char>>();
+}
+
+mal_type not_implemented(const mal_list&)
+{
+    throw std::runtime_error("not implemented");
+}
+
+mal_type is_callable(const mal_list& args)
+{
+    mal_type arg{mal_list_at(args, 0)};
+    auto fptr{std::get_if<mal_func>(&arg)};
+    auto pptr{std::get_if<mal_proc>(&arg)};
+    return bool_it((fptr and (not fptr->is_macro())) or pptr);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<env> get_ns()
@@ -529,6 +551,16 @@ std::shared_ptr<env> get_ns()
     ns->set("contains?", mal_proc{contains});
     ADD_FUNC(ns, keys);
     ADD_FUNC(ns, vals);
+    ns->set("readline", mal_proc{core_readline});
+    ns->set("fn?", mal_proc{is_callable});
+
+    std::vector<std::string> missing{
+        "time-ms", "meta", "with-meta",
+        "string?", "number?", "seq", "conj",};
+    for (auto& symbol: missing) {
+        ns->set(symbol, mal_proc{not_implemented});
+    }
+
     return ns;
 }
 
