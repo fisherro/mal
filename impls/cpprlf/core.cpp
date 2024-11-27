@@ -320,10 +320,57 @@ mal_type is_symbol(const mal_list& args)
     return bool_it(not is_keyword(*opt));
 }
 
+mal_type symbol(const mal_list& args)
+{
+    return args.at_to<std::vector<char>>(0) | std::ranges::to<std::string>();
+}
+
+mal_type keyword(const mal_list& args)
+{
+    auto arg{mal_list_at(args, 0)};
+    if (auto kw_ptr{std::get_if<std::string>(&arg)}; kw_ptr) {
+        if (is_keyword(*kw_ptr)) return arg;
+        else throw std::runtime_error{"arg is a symbol"};
+    }
+    if (auto v_ptr{std::get_if<std::vector<char>>(&arg)}; v_ptr) {
+        return std::string(1, ':') + (*v_ptr | std::ranges::to<std::string>());
+    }
+    throw std::runtime_error{"arg to keyword is not a string"};
+}
+
+mal_type core_is_keyword(const mal_list& args)
+{
+    auto opt{try_mal_to<std::string>(mal_list_at(args, 0))};
+    if (not opt) return mal_false{};
+    return bool_it(is_keyword(*opt));
+}
+
+mal_type vector(const mal_list& args)
+{
+    mal_list copy{args};
+    copy.become_vector();
+    return copy;
+}
+
+mal_type is_vector(const mal_list& args)
+{
+    auto list_opt{try_mal_to<mal_list>(mal_list_at(args, 0))};
+    if (not list_opt) return mal_false{};
+    return bool_it(list_opt->is_vector());
+}
+
+mal_type is_sequential(const mal_list& args)
+{
+    auto list_opt{try_mal_to<mal_list>(mal_list_at(args, 0))};
+    if (not list_opt) return mal_false{};
+    return bool_it(list_opt->is_list() or list_opt->is_vector());
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<env> get_ns()
 {
+    //TODO: Make a macro to handle adding the is_x -> x? predicates.
     auto ns{env::make()};
     ADD_INT_OP(ns, +);
     ADD_INT_OP(ns, -);
@@ -363,6 +410,12 @@ std::shared_ptr<env> get_ns()
     make_is_type<mal_true>(ns, "true?");
     make_is_type<mal_false>(ns, "false?");
     ns->set("symbol?", mal_proc{is_symbol});
+    ADD_FUNC(ns, symbol);
+    ADD_FUNC(ns, keyword);
+    ns->set("keyword?", mal_proc{core_is_keyword});
+    ADD_FUNC(ns, vector);
+    ns->set("vector?", mal_proc{is_vector});
+    ns->set("sequential?", mal_proc{is_sequential});
     return ns;
 }
 
