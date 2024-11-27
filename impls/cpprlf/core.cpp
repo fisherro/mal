@@ -8,6 +8,12 @@
 #include <ranges>
 #include <utility>
 
+//TODO: See if there's anywhere to use...
+//      std::optional::value_or
+//                     and_then
+//                     transform
+//                     or_else
+
 #define ADD_INT_OP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(args.at_to<int>(0) OP args.at_to<int>(1)); }})
 
 #define ADD_INT_COMP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return bool_it(args.at_to<int>(0) OP args.at_to<int>(1)); }})
@@ -22,6 +28,20 @@ mal_type bool_it(bool b)
     if (b) return mal_true{};
     return mal_false{};
 }
+
+// Creates a "type?" predicate and adds it to the given environment.
+template <typename T>
+void make_is_type(std::shared_ptr<env> an_env, std::string name)
+{
+    auto p = [=](const mal_list& args)
+    {
+        auto opt{try_mal_to<T>(mal_list_at(args, 0))};
+        return bool_it(opt.has_value());
+    };
+    an_env->set(name, mal_proc{p});
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 mal_type core_pr_str(const mal_list& args)
 {
@@ -293,6 +313,15 @@ mal_type map(const mal_list& args)
     return results;
 }
 
+mal_type is_symbol(const mal_list& args)
+{
+    auto opt{try_mal_to<std::string>(mal_list_at(args, 0))};
+    if (not opt) return mal_false{};
+    return bool_it(not is_keyword(*opt));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 std::shared_ptr<env> get_ns()
 {
     auto ns{env::make()};
@@ -330,6 +359,10 @@ std::shared_ptr<env> get_ns()
     ns->set("throw", mal_proc{mal_throw});
     ADD_FUNC(ns, apply);
     ADD_FUNC(ns, map);
+    make_is_type<mal_nil>(ns, "nil?");
+    make_is_type<mal_true>(ns, "true?");
+    make_is_type<mal_false>(ns, "false?");
+    ns->set("symbol?", mal_proc{is_symbol});
     return ns;
 }
 

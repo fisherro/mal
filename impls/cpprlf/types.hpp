@@ -47,6 +47,9 @@ struct mal_nil { bool operator==(mal_nil) const {return true;} };
 struct mal_false { bool operator==(mal_false) const {return true;} };
 struct mal_true { bool operator==(mal_true) const {return true;} };
 
+inline bool is_keyword(std::string_view symbol)
+{ return (not symbol.empty()) and (':' == symbol.at(0)); }
+
 /*
  * The mal_type variant is recursive. It holds types that depend on itself.
  * We use type erasure via std::any to break the recursion.
