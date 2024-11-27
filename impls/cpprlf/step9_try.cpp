@@ -247,6 +247,9 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                 }
                 if ("try*" == *symbol) {
                     // (try* A (catch* B C))
+                    if (list->size() < 3) {
+                        throw std::runtime_error("catch* not found");
+                    }
                     // Some sort of destructuring feature would be nice here.
                     auto a{mal_list_at(*list, 1)};
                     mal_type what;
@@ -262,7 +265,9 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                         what = e.get();
                     }
                     auto catcher{list->at_to<mal_list>(2)};
-                    //TODO: Check that first element is "catch*"?
+                    if (not is_head_this_symbol(catcher, "catch*")) {
+                        throw std::runtime_error("catch* not found");
+                    }
                     auto b{catcher.at_to<std::string>(1)};
                     // New env that binds B to what.
                     auto new_env{env::make(current_env)};

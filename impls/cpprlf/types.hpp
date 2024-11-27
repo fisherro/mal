@@ -247,6 +247,7 @@ mal_type mal_map_ikey_to_okey(std::string_view inner_key);
 void mal_map_set(mal_map& map, const mal_type& outer_key, mal_type value);
 std::optional<mal_type> mal_map_get(
         const mal_map& map, const mal_type& outer_key);
+void mal_map_remove(mal_map& map, const mal_type& outer_key);
 std::vector<std::pair<std::string, mal_type>> mal_map_pairs(const mal_map& map);
 
 mal_type mal_proc_call(const mal_proc& p, const mal_list& args);

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <iterator>
 #include <ranges>
+#include <span>
 #include <utility>
 
 //TODO: See if there's anywhere to use...
@@ -106,6 +107,7 @@ mal_type count(const mal_list& args)
 
 mal_type equals(const mal_list& args)
 {
+    //TODO: Fails for maps
     mal_type lhs{mal_list_at(args, 0)};
     mal_type rhs{mal_list_at(args, 1)};
     return bool_it(lhs == rhs);
@@ -366,11 +368,114 @@ mal_type is_sequential(const mal_list& args)
     return bool_it(list_opt->is_list() or list_opt->is_vector());
 }
 
+mal_type hash_map(const mal_list& args)
+{
+    mal_map result;
+    if (0 == args.size()) return result;
+    if (0 != (args.size() % 2)) throw std::runtime_error{"missing map value"};
+    auto cpp_vector{mal_list_get(args)};
+    //TODO: Look to see if span could replace uses of subrange.
+    std::span<mal_type> span(cpp_vector);
+    while (span.size() > 0) {
+        mal_type outer_key{span[0]};
+        mal_type value{span[1]};
+        mal_map_set(result, outer_key, value);
+        span = span.subspan(2);
+    }
+    return result;
+}
+
+mal_type is_map(const mal_list& args)
+{
+    auto arg{mal_list_at(args, 0)};
+    if (auto list_ptr{std::get_if<mal_list>(&arg)}; list_ptr) {
+        return bool_it(list_ptr->is_map());
+    }
+    if (auto map_ptr{std::get_if<mal_map>(&arg)}; map_ptr) {
+        return mal_true{};
+    }
+    return mal_false{};
+}
+
+mal_type assoc(const mal_list& args)
+{
+    auto argv{mal_list_get(args)};
+    auto map{mal_to<mal_map>(argv.at(0))};
+    auto the_rest{std::span<mal_type>(argv).subspan(1)};
+    if (0 == the_rest.size()) return map;
+    if (0 != (the_rest.size() % 2)) {
+        throw std::runtime_error{"missing map value"};
+    }
+    while (the_rest.size() > 0) {
+        mal_type outer_key{the_rest[0]};
+        mal_type value{the_rest[1]};
+        mal_map_set(map, outer_key, value);
+        the_rest = the_rest.subspan(2);
+    }
+    return map;
+}
+
+mal_type dissoc(const mal_list& args)
+{
+    auto argv{mal_list_get(args)};
+    auto map{mal_to<mal_map>(argv.at(0))};
+    auto the_rest{std::span<mal_type>(argv).subspan(1)};
+    if (0 == the_rest.size()) return map;
+    for (auto& key: the_rest) {
+        mal_map_remove(map, key);
+    }
+    return map;
+}
+
+mal_type map_get(const mal_list& args)
+{
+    try {
+        auto map{args.at_to<mal_map>(0)};
+        auto key{mal_list_at(args, 1)};
+        auto value_opt{mal_map_get(map, key)};
+        if (not value_opt) return mal_nil{};
+        return *value_opt;
+    } catch (...) {
+        return mal_nil{};
+    }
+}
+
+mal_type contains(const mal_list& args)
+{
+    auto map{args.at_to<mal_map>(0)};
+    auto key{mal_list_at(args, 1)};
+    auto value_opt{mal_map_get(map, key)};
+    return bool_it(value_opt.has_value());
+}
+
+mal_type keys(const mal_list& args)
+{
+    auto map{args.at_to<mal_map>(0)};
+    auto pairs{mal_map_pairs(map)};
+    // Theres a view for this...but I'm not using it.
+    mal_list results;
+    for (auto& pair: pairs) {
+        mal_list_add(results, mal_map_ikey_to_okey(pair.first));
+    }
+    return results;
+}
+
+mal_type vals(const mal_list& args)
+{
+    auto map{args.at_to<mal_map>(0)};
+    auto pairs{mal_map_pairs(map)};
+    // Theres a view for this...but I'm not using it.
+    mal_list results;
+    for (auto& pair: pairs) mal_list_add(results, pair.second);
+    return results;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<env> get_ns()
 {
     //TODO: Make a macro to handle adding the is_x -> x? predicates.
+    //TODO: Make a macro for _ -> -
     auto ns{env::make()};
     ADD_INT_OP(ns, +);
     ADD_INT_OP(ns, -);
@@ -416,6 +521,14 @@ std::shared_ptr<env> get_ns()
     ADD_FUNC(ns, vector);
     ns->set("vector?", mal_proc{is_vector});
     ns->set("sequential?", mal_proc{is_sequential});
+    ns->set("hash-map", mal_proc{hash_map});
+    ns->set("map?", mal_proc{is_map});
+    ADD_FUNC(ns, assoc);
+    ADD_FUNC(ns, dissoc);
+    ns->set("get", mal_proc{map_get});
+    ns->set("contains?", mal_proc{contains});
+    ADD_FUNC(ns, keys);
+    ADD_FUNC(ns, vals);
     return ns;
 }
 

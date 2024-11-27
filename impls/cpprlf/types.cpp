@@ -211,6 +211,13 @@ std::optional<mal_type> mal_map_get(
     return std::any_cast<mal_type>(iter->second);
 }
 
+void mal_map_remove(mal_map& map, const mal_type& outer_key)
+{
+    std::string inner_key{mal_map_okey_to_ikey(outer_key)};
+    auto& inner_map{mal_map_helper::get(map)};
+    inner_map.erase(inner_key);
+}
+
 mal_type mal_func_ast(const mal_func& f)
 {
     return mal_func_helper::ast(f);
