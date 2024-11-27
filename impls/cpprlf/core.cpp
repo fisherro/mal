@@ -2,6 +2,7 @@
 #include "printer.hpp"
 #include "reader.hpp"
 #include "types.hpp"
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -479,9 +480,13 @@ mal_type core_readline(const mal_list& args)
     return line | std::ranges::to<std::vector<char>>();
 }
 
-mal_type not_implemented(const mal_list&)
+mal_type time_ms(const mal_list&)
 {
-    throw std::runtime_error("not implemented");
+    auto time_point{std::chrono::high_resolution_clock::now()};
+    auto duration{time_point.time_since_epoch()};
+    std::chrono::duration<int, std::milli> int_ms{
+        std::chrono::duration_cast<std::chrono::milliseconds>(duration)};
+    return int_ms.count();
 }
 
 mal_type is_callable(const mal_list& args)
@@ -490,6 +495,11 @@ mal_type is_callable(const mal_list& args)
     auto fptr{std::get_if<mal_func>(&arg)};
     auto pptr{std::get_if<mal_proc>(&arg)};
     return bool_it((fptr and (not fptr->is_macro())) or pptr);
+}
+
+mal_type not_implemented(const mal_list&)
+{
+    throw std::runtime_error("not implemented");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -553,10 +563,11 @@ std::shared_ptr<env> get_ns()
     ADD_FUNC(ns, vals);
     ns->set("readline", mal_proc{core_readline});
     ns->set("fn?", mal_proc{is_callable});
+    ns->set("time-ms", mal_proc{time_ms});
 
     std::vector<std::string> missing{
-        "time-ms", "meta", "with-meta",
-        "string?", "number?", "seq", "conj",};
+        "meta", "with-meta", "string?", "number?", "seq", "conj",
+    };
     for (auto& symbol: missing) {
         ns->set(symbol, mal_proc{not_implemented});
     }
