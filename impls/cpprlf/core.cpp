@@ -564,9 +564,11 @@ std::shared_ptr<env> get_ns()
     ns->set("readline", mal_proc{core_readline});
     ns->set("fn?", mal_proc{is_callable});
     ns->set("time-ms", mal_proc{time_ms});
+    make_is_type<std::vector<char>>(ns, "string?");
+    make_is_type<int>(ns, "number?");
 
     std::vector<std::string> missing{
-        "meta", "with-meta", "string?", "number?", "seq", "conj",
+        "meta", "with-meta", "seq", "conj",
     };
     for (auto& symbol: missing) {
         ns->set(symbol, mal_proc{not_implemented});
