@@ -16,6 +16,8 @@
 //                     transform
 //                     or_else
 
+//TODO: Is there someplace I could have used std::counted_iterator?
+
 #define ADD_INT_OP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return int(args.at_to<int>(0) OP args.at_to<int>(1)); }})
 
 #define ADD_INT_COMP(ENV, OP) ENV->set(std::string{#OP}, mal_proc{[](const mal_list& args)->mal_type{ return bool_it(args.at_to<int>(0) OP args.at_to<int>(1)); }})
@@ -497,6 +499,25 @@ mal_type is_callable(const mal_list& args)
     return bool_it((fptr and (not fptr->is_macro())) or pptr);
 }
 
+mal_type conj(const mal_list& arg_list)
+{
+    std::vector<mal_type> args{mal_list_get(arg_list)};
+    auto head{mal_to<mal_list>(args.at(0))};
+    auto tail{std::span<mal_type>{args}.subspan(1)};
+    std::vector<mal_type> collection{mal_list_get(head)};
+    if (head.is_vector()) {
+        std::ranges::copy(tail, std::back_inserter(collection));
+    } else {
+        // Might be better to reverse tail and append collection?
+        std::ranges::copy(
+                tail | std::views::reverse,
+                std::inserter(collection, collection.begin()));
+    }
+    return mal_list_from(collection, head.get_opener());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 mal_type not_implemented(const mal_list&)
 {
     throw std::runtime_error("not implemented");
@@ -566,10 +587,9 @@ std::shared_ptr<env> get_ns()
     ns->set("time-ms", mal_proc{time_ms});
     make_is_type<std::vector<char>>(ns, "string?");
     make_is_type<int>(ns, "number?");
+    ADD_FUNC(ns, conj);
 
-    std::vector<std::string> missing{
-        "meta", "with-meta", "seq", "conj",
-    };
+    std::vector<std::string> missing{"meta", "with-meta", "seq",};
     for (auto& symbol: missing) {
         ns->set(symbol, mal_proc{not_implemented});
     }

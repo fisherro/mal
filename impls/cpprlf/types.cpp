@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <any>
 #include <ranges>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -38,6 +39,13 @@ bool mal_list::operator==(const mal_list& that) const
     auto this_vec{mal_list_get(*this)};
     auto that_vec{mal_list_get(that)};
     return this_vec == that_vec;
+}
+
+mal_list mal_list_from(const std::span<mal_type> span, char opener)
+{
+    mal_list list{opener};
+    for (auto& m: span) mal_list_add(list, m);
+    return list;
 }
 
 mal_type mal_list_at(const mal_list& list, std::size_t i)

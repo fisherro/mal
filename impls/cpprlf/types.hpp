@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <span>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -233,6 +234,8 @@ std::optional<T> try_mal_to(const mal_type& m)
     return *value_ptr;
 }
 
+//TODO: Look for places this could be used now that it is available.
+mal_list mal_list_from(const std::span<mal_type> span, char opener = '(');
 mal_type mal_list_at(const mal_list& list, std::size_t i);
 std::optional<mal_type> try_mal_list_at(const mal_list& list, std::size_t i);
 std::vector<mal_type> mal_list_get(const mal_list& list);
