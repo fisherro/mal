@@ -1,4 +1,5 @@
 #include "env.hpp"
+#include "overloaded.hpp"
 #include "printer.hpp"
 #include "reader.hpp"
 #include "types.hpp"
@@ -516,6 +517,41 @@ mal_type conj(const mal_list& arg_list)
     return mal_list_from(collection, head.get_opener());
 }
 
+//TODO: Move not_mal_meta_holder and mal_get_meta_holder into types.
+template <typename T>
+concept not_mal_meta_holder = not std::convertible_to<T, mal_meta_holder>;
+
+mal_meta_holder* mal_get_meta_holder(mal_type& m)
+{
+    return std::visit(overloaded{
+            [](mal_meta_holder& mh) -> mal_meta_holder*
+            { return &mh; },
+            [](not_mal_meta_holder auto& mh) -> mal_meta_holder*
+            { return nullptr; }
+            }, m);
+}
+
+mal_type meta(const mal_list& arg_list)
+{
+    auto arg{mal_list_at(arg_list, 0)};
+    mal_meta_holder* holder_ptr{mal_get_meta_holder(arg)};
+    if (not holder_ptr) return mal_nil{};
+    std::shared_ptr<atom> meta_ptr{holder_ptr->get_meta()};
+    if (not meta_ptr) return mal_nil{};
+    return meta_ptr->deref();
+}
+
+mal_type with_meta(const mal_list& arg_list)
+{
+    // Ensure that holder is not a reference.
+    mal_type holder{mal_list_at(arg_list, 0)};
+    auto metadata{mal_list_at(arg_list, 1)};
+    auto holder_ptr{mal_get_meta_holder(holder)};
+    if (not holder_ptr) return mal_nil{};
+    holder_ptr->set_meta(std::make_shared<atom>(metadata));
+    return holder;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 mal_type not_implemented(const mal_list&)
@@ -588,8 +624,10 @@ std::shared_ptr<env> get_ns()
     make_is_type<std::vector<char>>(ns, "string?");
     make_is_type<int>(ns, "number?");
     ADD_FUNC(ns, conj);
+    ADD_FUNC(ns, meta);
+    ns->set("with-meta", mal_proc{with_meta});
 
-    std::vector<std::string> missing{"meta", "with-meta", "seq",};
+    std::vector<std::string> missing{"seq",};
     for (auto& symbol: missing) {
         ns->set(symbol, mal_proc{not_implemented});
     }

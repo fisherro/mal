@@ -198,6 +198,16 @@ mal_type read_form(reader& r)
         mal_list_add(list, read_form(r));
         return list;
     }
+    if ("^" == *token) {
+        r.next(); // Consume "^".
+        mal_list list;
+        mal_list_add(list, std::string{"with-meta"});
+        mal_type metadata{read_form(r)};
+        mal_type object{read_form(r)};
+        mal_list_add(list, object);
+        mal_list_add(list, metadata);
+        return list;
+    }
     return read_atom(r);
 }
 

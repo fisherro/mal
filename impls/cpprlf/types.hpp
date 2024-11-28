@@ -44,6 +44,13 @@ struct debug_me {
 };
 #endif
 
+struct mal_meta_holder {
+    void set_meta(std::shared_ptr<struct atom> metadata);
+    std::shared_ptr<struct atom> get_meta() const { return my_metadata; }
+private:
+    std::shared_ptr<struct atom> my_metadata;
+};
+
 struct mal_nil { bool operator==(mal_nil) const {return true;} };
 struct mal_false { bool operator==(mal_false) const {return true;} };
 struct mal_true { bool operator==(mal_true) const {return true;} };
@@ -59,7 +66,7 @@ inline bool is_keyword(std::string_view symbol)
  * While mal_proc return a std::any, that result always holds a mal_type.
  */
 
-struct mal_list {
+struct mal_list: mal_meta_holder {
     friend struct mal_list_helper;
     mal_list() {}
     explicit mal_list(char opener): my_opener{opener} {}
@@ -99,7 +106,7 @@ private:
 template <typename T>
 concept is_mal_list = std::is_same_v<mal_list, std::remove_const_t<T>>;
 
-struct mal_map {
+struct mal_map: mal_meta_holder {
     friend struct mal_map_helper;
     bool operator==(const mal_map& that) const;
 
@@ -115,7 +122,7 @@ private:
 };
 
 // This wraps a C++ function. Mal functions are mal_func.
-struct mal_proc {
+struct mal_proc: mal_meta_holder {
     friend struct mal_proc_helper;
     explicit mal_proc(std::function<std::any(mal_list)> f): my_function{f} {}
     bool operator==(const mal_proc&) const { return true; }
@@ -127,7 +134,7 @@ private:
 struct env;
 
 // The irony of the name "mal_func"...^_^
-struct mal_func {
+struct mal_func: mal_meta_holder {
     friend struct mal_func_helper;
     explicit mal_func(mal_list ast, std::shared_ptr<env> current_env);
     bool operator==(const mal_func&) const { return true; }
@@ -149,8 +156,6 @@ private:
 #endif
 };
 
-struct atom;
-
 /*
  * To add a type to this, be sure...
  *
@@ -168,7 +173,7 @@ using mal_type = std::variant<
     mal_true,
     mal_list,
     mal_map,
-    std::shared_ptr<atom>,
+    std::shared_ptr<struct atom>,
     mal_proc,
     mal_func>;
 
@@ -192,6 +197,9 @@ struct atom {
 private:
     mal_type my_value;
 };
+
+inline void mal_meta_holder::set_meta(std::shared_ptr<struct atom> metadata)
+{ my_metadata = std::make_shared<atom>(*metadata); }
 
 struct mal_to_exception: std::runtime_error {
     using std::runtime_error::runtime_error;
