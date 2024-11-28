@@ -552,6 +552,26 @@ mal_type with_meta(const mal_list& arg_list)
     return holder;
 }
 
+mal_type seq(const mal_list& arg_list)
+{
+    mal_type arg{mal_list_at(arg_list, 0)};
+    if (auto nil_ptr{std::get_if<mal_nil>(&arg)}; nil_ptr) {
+        return mal_nil{};
+    }
+    if (auto str_ptr{std::get_if<std::vector<char>>(&arg)}; str_ptr) {
+        if (str_ptr->empty()) return mal_nil{};
+        mal_list results;
+        for (char c: *str_ptr) mal_list_add(results, std::vector<char>{c});
+        return results;
+    }
+    if (auto list_ptr{std::get_if<mal_list>(&arg)}; list_ptr) {
+        if (list_ptr->empty()) return mal_nil();
+        if (list_ptr->is_vector()) list_ptr->become_list();
+        return *list_ptr;
+    }
+    return mal_nil{};
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 mal_type not_implemented(const mal_list&)
@@ -626,11 +646,14 @@ std::shared_ptr<env> get_ns()
     ADD_FUNC(ns, conj);
     ADD_FUNC(ns, meta);
     ns->set("with-meta", mal_proc{with_meta});
+    ADD_FUNC(ns, seq);
 
-    std::vector<std::string> missing{"seq",};
+#if 0
+    std::vector<std::string> missing{};
     for (auto& symbol: missing) {
         ns->set(symbol, mal_proc{not_implemented});
     }
+#endif
 
     return ns;
 }
