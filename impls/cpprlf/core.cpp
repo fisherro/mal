@@ -4,6 +4,8 @@
 #include "reader.hpp"
 #include "types.hpp"
 #include <chrono>
+#include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -572,6 +574,33 @@ mal_type seq(const mal_list& arg_list)
     return mal_nil{};
 }
 
+mal_type core_system(const mal_list& arg_list)
+{
+    auto v{arg_list.at_to<std::vector<char>>(0)};
+    auto s{v | std::ranges::to<std::string>()};
+    return std::system(s.c_str());
+}
+
+mal_type backtick(const mal_list& arg_list)
+{
+    auto v{arg_list.at_to<std::vector<char>>(0)};
+    auto s{v | std::ranges::to<std::string>()};
+    FILE* fp{popen(s.c_str(), "r")};
+    if (not fp) return mal_nil{};
+    std::vector<char> results;
+    char* line{nullptr};
+    std::size_t size{0};
+    while (true) {
+        ssize_t bytes_read{getline(&line, &size, fp)};
+        if (-1 == bytes_read) break;
+        std::ranges::copy(
+                line, line + bytes_read, std::back_inserter(results));
+    }
+    std::free(line);
+    pclose(fp);
+    return results;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 mal_type not_implemented(const mal_list&)
@@ -647,6 +676,8 @@ std::shared_ptr<env> get_ns()
     ADD_FUNC(ns, meta);
     ns->set("with-meta", mal_proc{with_meta});
     ADD_FUNC(ns, seq);
+    ns->set("system", mal_proc{core_system});
+    ADD_FUNC(ns, backtick);
 
 #if 0
     std::vector<std::string> missing{};
