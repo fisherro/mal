@@ -48,6 +48,8 @@ like the proposed `std::polymorphic_value` (P0201) or `std::indirect_value` (P19
 a better option than `std::unique_ptr` in order to (mostly) transparently
 preserve value semantics.
 
+P3019 proposed both std::polymorphic and std::indirect. This made it into C++26.
+
 In a case like `vector`, the contained objects will already be dynamically
 allocated, so the wrapper (`bar`) can contain object directly.
 
