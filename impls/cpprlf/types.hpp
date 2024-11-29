@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <source_location>
 #include <span>
 #include <sstream>
 #include <stdexcept>
@@ -220,12 +221,16 @@ inline bool mal_truthy(const mal_type& m)
 { return (not mal_is<mal_nil>(m)) and (not mal_is<mal_false>(m)); }
 
 template <typename T>
-T mal_to(const mal_type& m)
+T mal_to(const mal_type& m,
+        const std::source_location location = std::source_location::current())
 {
     const T* value_ptr{std::get_if<T>(&m)};
     if (not value_ptr) {
         std::ostringstream message;
-        message << "requested type: "
+        message << location.file_name()
+            << '(' << location.line() << "): "
+            << location.function_name()
+            << ": requested type: "
             << demangle(typeid(T).name())
             << "; real type: "
             << get_mal_type(m);

@@ -11,6 +11,7 @@
 #include <iterator>
 #include <ranges>
 #include <span>
+#include <stdexcept>
 #include <utility>
 
 //TODO: See if there's anywhere to use...
@@ -46,6 +47,35 @@ void make_is_type(std::shared_ptr<env> an_env, std::string name)
         return bool_it(opt.has_value());
     };
     an_env->set(name, mal_proc{p});
+}
+
+mal_map list_to_map(const mal_list& list)
+{
+    mal_map result;
+    if (0 == list.size()) return result;
+    if (0 != (list.size() % 2)) throw std::runtime_error{"missing map value"};
+    auto cpp_vector{mal_list_get(list)};
+    //TODO: Look to see if span could replace uses of subrange.
+    std::span<mal_type> span(cpp_vector);
+    while (span.size() > 0) {
+        mal_type outer_key{span[0]};
+        mal_type value{span[1]};
+        mal_map_set(result, outer_key, value);
+        span = span.subspan(2);
+    }
+    return result;
+}
+
+std::optional<mal_map> mal_to_map(const mal_type& m)
+{
+    if (auto map_ptr{std::get_if<mal_map>(&m)}; map_ptr) {
+        return *map_ptr;
+    }
+    if (auto list_ptr{std::get_if<mal_list>(&m)}; list_ptr) {
+        if (not list_ptr->is_map()) return std::nullopt;
+        return list_to_map(*list_ptr);
+    } 
+    return std::nullopt;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -376,35 +406,19 @@ mal_type is_sequential(const mal_list& args)
 
 mal_type hash_map(const mal_list& args)
 {
-    mal_map result;
-    if (0 == args.size()) return result;
-    if (0 != (args.size() % 2)) throw std::runtime_error{"missing map value"};
-    auto cpp_vector{mal_list_get(args)};
-    //TODO: Look to see if span could replace uses of subrange.
-    std::span<mal_type> span(cpp_vector);
-    while (span.size() > 0) {
-        mal_type outer_key{span[0]};
-        mal_type value{span[1]};
-        mal_map_set(result, outer_key, value);
-        span = span.subspan(2);
-    }
-    return result;
+    return list_to_map(args);
 }
 
 mal_type is_map(const mal_list& args)
 {
     auto arg{mal_list_at(args, 0)};
-    if (auto list_ptr{std::get_if<mal_list>(&arg)}; list_ptr) {
-        return bool_it(list_ptr->is_map());
-    }
-    if (auto map_ptr{std::get_if<mal_map>(&arg)}; map_ptr) {
-        return mal_true{};
-    }
-    return mal_false{};
+    auto map_opt{mal_to_map(arg)};
+    return bool_it(map_opt.has_value());
 }
 
 mal_type assoc(const mal_list& args)
 {
+    //TODO: Use mal_to_map?
     auto argv{mal_list_get(args)};
     auto map{mal_to<mal_map>(argv.at(0))};
     auto the_rest{std::span<mal_type>(argv).subspan(1)};
@@ -423,6 +437,7 @@ mal_type assoc(const mal_list& args)
 
 mal_type dissoc(const mal_list& args)
 {
+    //TODO: Use mal_to_map?
     auto argv{mal_list_get(args)};
     auto map{mal_to<mal_map>(argv.at(0))};
     auto the_rest{std::span<mal_type>(argv).subspan(1)};
@@ -435,19 +450,20 @@ mal_type dissoc(const mal_list& args)
 
 mal_type map_get(const mal_list& args)
 {
-    try {
-        auto map{args.at_to<mal_map>(0)};
-        auto key{mal_list_at(args, 1)};
-        auto value_opt{mal_map_get(map, key)};
-        if (not value_opt) return mal_nil{};
-        return *value_opt;
-    } catch (...) {
-        return mal_nil{};
+    if (args.size() < 2) {
+        throw std::runtime_error("get: needs two arguments");
     }
+    auto map_opt{mal_to_map(mal_list_at(args, 0))};
+    if (not map_opt) return mal_nil{};
+    auto key{mal_list_at(args, 1)};
+    auto value_opt{mal_map_get(*map_opt, key)};
+    if (not value_opt) return mal_nil{};
+    return *value_opt;
 }
 
 mal_type contains(const mal_list& args)
 {
+    //TODO: Use mal_to_map?
     auto map{args.at_to<mal_map>(0)};
     auto key{mal_list_at(args, 1)};
     auto value_opt{mal_map_get(map, key)};
@@ -456,8 +472,16 @@ mal_type contains(const mal_list& args)
 
 mal_type keys(const mal_list& args)
 {
-    auto map{args.at_to<mal_map>(0)};
-    auto pairs{mal_map_pairs(map)};
+    auto arg{mal_list_at(args, 0)};
+    auto map_opt{mal_to_map(arg)};
+    if (not map_opt) {
+        std::ostringstream message;
+        message << "keys called with "
+            << get_mal_type(arg)
+            << " instead of a map";
+        throw std::runtime_error{message.str()};
+    }
+    auto pairs{mal_map_pairs(*map_opt)};
     // Theres a view for this...but I'm not using it.
     mal_list results;
     for (auto& pair: pairs) {
@@ -468,6 +492,7 @@ mal_type keys(const mal_list& args)
 
 mal_type vals(const mal_list& args)
 {
+    //TODO: Use mal_to_map?
     auto map{args.at_to<mal_map>(0)};
     auto pairs{mal_map_pairs(map)};
     // Theres a view for this...but I'm not using it.
