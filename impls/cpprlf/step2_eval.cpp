@@ -30,6 +30,7 @@ mal_type eval_(const auto& ast, const mal_env& env)
     //TODO: Use visit?
     if (auto sp{std::get_if<std::string>(&ast)}; sp) {
         auto iter{env.find(*sp)};
+        if (':' == sp->at(0)) return *sp;
         if (env.end() != iter) return iter->second;
         std::string message{"Symbol "};
         message += *sp;
@@ -38,6 +39,14 @@ mal_type eval_(const auto& ast, const mal_env& env)
     }
     // A mal_proc takes a mal_list and returns an std::any.
     if (auto list{std::get_if<mal_list>(&ast)}; list) {
+        if (not list->is_list()) {
+            mal_list results{list->get_opener()};
+            auto cpp_vector{mal_list_get(*list)};
+            for (auto element: cpp_vector) {
+                mal_list_add(results, eval_(element, env));
+            }
+            return results;
+        }
         if (list->empty()) return ast;
         const mal_type symbol{mal_list_at(*list, 0)};
         const mal_type proc_box{eval_(symbol, env)};
