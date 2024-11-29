@@ -31,9 +31,18 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
         std::cout << "EVAL: " << pr_str(ast, true) << '\n';
     }
     if (auto sp{std::get_if<std::string>(&ast)}; sp) {
+        if (is_keyword(*sp)) return ast;
         return current_env->get(*sp);
     }
     if (auto list{std::get_if<mal_list>(&ast)}; list) {
+        if (not list->is_list()) {
+            mal_list results{list->get_opener()};
+            auto cpp_vector{mal_list_get(*list)};
+            for (auto element: cpp_vector) {
+                mal_list_add(results, eval(element, current_env));
+            }
+            return results;
+        }
         if (list->empty()) return ast;
         const mal_type head{mal_list_at(*list, 0)};
         if (auto symbol{std::get_if<std::string>(&head)}; symbol) {
