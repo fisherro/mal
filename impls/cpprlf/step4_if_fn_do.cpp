@@ -31,9 +31,18 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
         }
     }
     if (auto sp{std::get_if<std::string>(&ast)}; sp) {
+        if (is_keyword(*sp)) return ast;
         return current_env->get(*sp);
     }
     if (auto list{std::get_if<mal_list>(&ast)}; list) {
+        if (not list->is_list()) {
+            mal_list results{list->get_opener()};
+            auto cpp_vector{mal_list_get(*list)};
+            for (auto element: cpp_vector) {
+                mal_list_add(results, eval(element, current_env));
+            }
+            return results;
+        }
         if (list->empty()) return ast;
         const mal_type head{mal_list_at(*list, 0)};
         if (auto symbol{std::get_if<std::string>(&head)}; symbol) {
@@ -80,24 +89,9 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                 }
             }
             if (*symbol == "fn*") {
-                mal_list binds{list->at_to<mal_list>(1)};
-                mal_type body{mal_list_at(*list, 2)};
-                auto closure = [=](const mal_list& args) -> mal_type
-                {
-                    auto new_env{env::make(current_env)};
-                    // The process says that adding the binds/args to the
-                    // environment should be done in the environment's ctor.
-                    auto binds_vector{mal_list_get(binds)};
-                    auto args_vector{mal_list_get(args)};
-                    auto arg_iter{args_vector.begin()};
-                    for (auto& bind: binds_vector) {
-                        if (arg_iter == args_vector.end()) break;
-                        new_env->set(mal_to<std::string>(bind), *arg_iter);
-                        ++arg_iter;
-                    }
-                    return eval(body, new_env);
-                };
-                return mal_proc{closure};
+                // Partial retrofit of the step 5 mal_func code:
+                mal_func f{*list, current_env};
+                return f.proc();
             }
         }
         // A mal_proc takes a mal_list and returns an std::any.
@@ -130,6 +124,7 @@ int main()
 {
     try {
         auto repl_env{env::make(get_ns())};
+        rep("(def! not (fn* (a) (if a false true)))", repl_env);
         while (true) {
             std::cout << "user> ";
             std::string line;
