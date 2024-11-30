@@ -37,6 +37,16 @@ mal_type eval_(const auto& ast, const mal_env& env)
         message += " not found";
         throw std::runtime_error{message};
     }
+    if (auto map_ptr{std::get_if<mal_map>(&ast)}; map_ptr) {
+        // Retrofit from step9...
+        mal_map result;
+        auto pairs{mal_map_pairs(*map_ptr)};
+        for (const auto& [key, value]: pairs) {
+            auto okey{mal_map_ikey_to_okey(key)};
+            mal_map_set(result, okey, eval_(value, env));
+        }
+        return result;
+    }
     // A mal_proc takes a mal_list and returns an std::any.
     if (auto list{std::get_if<mal_list>(&ast)}; list) {
         if (not list->is_list()) {
