@@ -35,9 +35,21 @@ struct mal_func_helper {
 
 bool mal_list::operator==(const mal_list& that) const
 {
+#ifdef MAL_DEBUG_OP_EQUALS
+    auto dump = [](std::string_view prefix, const auto& vec)
+    {
+        for (const auto& element: vec) {
+            std::cout << "mal_list::op==: " << prefix << ": " << pr_str(element, true) << '\n';
+        }
+    };
+#endif
     // This can be harsh since we have to unwrap all the std::any.
     auto this_vec{mal_list_get(*this)};
     auto that_vec{mal_list_get(that)};
+#ifdef MAL_DEBUG_OP_EQUALS
+    dump("this", this_vec);
+    dump("that", that_vec);
+#endif
     return this_vec == that_vec;
 }
 
@@ -127,6 +139,23 @@ std::type_index get_mal_type_info(const mal_type& m)
     return std::visit(get, m);
 }
 
+mal_map list_to_map(const mal_list& list)
+{
+    mal_map result;
+    if (0 == list.size()) return result;
+    if (0 != (list.size() % 2)) throw std::runtime_error{"missing map value"};
+    auto cpp_vector{mal_list_get(list)};
+    //TODO: Look to see if span could replace uses of subrange.
+    std::span<mal_type> span(cpp_vector);
+    while (span.size() > 0) {
+        mal_type outer_key{span[0]};
+        mal_type value{span[1]};
+        mal_map_set(result, outer_key, value);
+        span = span.subspan(2);
+    }
+    return result;
+}
+
 /*
  * Keys (outer keys) can be either keywords or strings.
  *
@@ -179,7 +208,20 @@ mal_type mal_map_ikey_to_okey(std::string_view inner_key)
 bool mal_map::operator==(const mal_map& that) const
 {
     // This can be harsh since we have to unwrap all the std::any.
-    return mal_map_pairs(*this) == mal_map_pairs(that);
+    auto& this_map{mal_map_helper::get(*this)};
+    auto& that_map{mal_map_helper::get(that)};
+    for (auto& this_pair: this_map) {
+        auto that_iter{that_map.find(this_pair.first)};
+        if (that_map.end() == that_iter) return false;
+        const auto& this_value{std::any_cast<mal_type>(this_pair.second)};
+        const auto& that_value{std::any_cast<mal_type>(that_iter->second)};
+#ifdef MAL_DEBUG_OP_EQUALS
+        std::cout << "mal_map::op==: this: " << this_pair.first << " -> " << pr_str(this_value, true) << '\n';
+        std::cout << "mal_map::op==: that: " << that_iter->first << " -> " << pr_str(that_value, true) << '\n';
+#endif
+        if (this_value != that_value) return false;
+    }
+    return true;
 }
 
 std::vector<std::string> mal_map::inner_keys() const

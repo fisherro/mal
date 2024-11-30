@@ -163,10 +163,9 @@ mal_type read_list(reader& r, char opener)
         if (not token) r.throw_eof();
         if (closer_string == *token) {
             r.next(); // Consume closer.
-            if (('{' == list.get_opener()) and
-                (0 != (list.size() % 2)))
-            {
-                r.throw_eof();
+            if ('{' == list.get_opener()) {
+                //TODO: Remove checks for list::is_map elsewhere.
+                return list_to_map(list);
             }
             return list;
         }

@@ -258,6 +258,7 @@ std::optional<T> mal_list::try_at_to(std::size_t i) const
     return try_mal_to<T>(*opt);
 }
 
+mal_map list_to_map(const mal_list& list);
 std::string mal_map_okey_to_ikey(const mal_type& outer_key);
 mal_type mal_map_ikey_to_okey(std::string_view inner_key);
 void mal_map_set(mal_map& map, const mal_type& outer_key, mal_type value);

@@ -49,23 +49,6 @@ void make_is_type(std::shared_ptr<env> an_env, std::string name)
     an_env->set(name, mal_proc{p});
 }
 
-mal_map list_to_map(const mal_list& list)
-{
-    mal_map result;
-    if (0 == list.size()) return result;
-    if (0 != (list.size() % 2)) throw std::runtime_error{"missing map value"};
-    auto cpp_vector{mal_list_get(list)};
-    //TODO: Look to see if span could replace uses of subrange.
-    std::span<mal_type> span(cpp_vector);
-    while (span.size() > 0) {
-        mal_type outer_key{span[0]};
-        mal_type value{span[1]};
-        mal_map_set(result, outer_key, value);
-        span = span.subspan(2);
-    }
-    return result;
-}
-
 std::optional<mal_map> mal_to_map(const mal_type& m)
 {
     if (auto map_ptr{std::get_if<mal_map>(&m)}; map_ptr) {

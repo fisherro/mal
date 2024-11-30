@@ -135,12 +135,29 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                 current_env->dump(std::cout);
             }
         }
+        // Symbols and keywords:
         if (auto sp{std::get_if<std::string>(&ast)}; sp) {
             // Keywords evaluate to themselves.
             if (is_keyword(*sp)) return ast;
             return current_env->get(*sp);
         }
+        // Maps:
+        if (auto map_ptr{std::get_if<mal_map>(&ast)}; map_ptr) {
+            // Eval the values.
+            // Previous code eval'd the keys, but that might not work now that
+            // the reader returns maps as maps instead of as lists.
+            mal_map result;
+            auto pairs{mal_map_pairs(*map_ptr)};
+            for (const auto& [key, value]: pairs) {
+                //TODO: Should pairs return outer keys?
+                auto okey{mal_map_ikey_to_okey(key)};
+                mal_map_set(result, okey, eval(value, current_env));
+            }
+            return result;
+        }
+        // Lists and vectors:
         if (auto list{std::get_if<mal_list>(&ast)}; list) {
+            //TODO: This map processing should no longer be needed.
             if (list->is_map()) {
                 // Maps are read as lists. When the list is evaluated, we
                 // convert it to an actual mal_map object.
