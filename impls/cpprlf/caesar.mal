@@ -1,0 +1,42 @@
+(def! gensym (fn* () (symbol (backtick "uuidgen"))))
+
+;; Borrowed from test_cascade.mal
+(defmacro! or
+  (fn* [& xs]
+    (if (< (count xs) 2)
+      (first xs)
+      (let* [r (gensym)]
+	`(let* (~r ~(first xs)) (if ~r ~r (or ~@(rest xs))))))))
+
+(def! plain "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+;(prn plain)
+
+(def! encoded "NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm")
+;(prn encoded)
+
+(def! build-dict
+  (fn* (a b z)
+    (if (or (empty? a) (empty? b))
+      z
+      (build-dict (rest a) (rest b) (assoc z (first a) (first b))))))
+
+(def! dict (build-dict (seq plain) (seq encoded) {}))
+;(prn dict)
+
+(def! get*
+  (fn* (map key)
+    (let* (value (get map key))
+      (if value
+	value
+	key))))
+
+(def! rot-13
+  (fn* (in out)
+    (if (empty? in)
+      out
+      (rot-13 (rest in) (conj out (get* dict (first in)))))))
+
+(def! joke "Why did the chicken cross the road?\nGb trg gb gur bgure fvqr!")
+(println joke)
+(println)
+(println (apply string (rot-13 (seq joke) [])))

@@ -1,0 +1,12 @@
+(def! foldl (fn* (f z lst)
+		 (if (empty? lst)
+		   z
+		   (foldl f (f z (first lst)) (rest lst)))))
+
+(def! foldr (fn* (f z lst)
+		 (if (empty? lst)
+		   z
+		   (foldr f (f (first lst) z) (rest lst)))))
+
+(println "foldl: " (foldl - 0 (list 1 2 3 4 5)))
+(println "foldr: " (foldr - 0 (list 1 2 3 4 5)))
