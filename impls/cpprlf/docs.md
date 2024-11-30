@@ -1,3 +1,19 @@
+## Command line options (cpprlf)
+
+If the interpreter is passed command line arguments that begin with `--`, this will add a binding to the REPL environment.
+
+`--FOO` would bind `FOO` to `true`.
+
+`--BAR=false` would bind `BAR` to `false`.
+
+There are some debug values that can be set.
+
+`--DEBUG-EVAL`: As with vanilla `mal`, this will make the interpreter print the AST when `eval` is called.
+
+`--DEBUG-EVAL-ENV`: If `DEBUG-EVAL` is true, this will dump the current environment whenever `eval` is called.
+
+`--DEBUG-EVAL-ENV-FULL`: If `DEBUG-EVAL` is true, this will dump the full chain of environments whenever `eval` is called. (This will take precedence over plain `DEBUG-EVAL-ENV`.)
+
 ## Readably
 
 When a function says it prints "readably", that means that strings will be enclosed by double-quotes and double-quotes, backslashes, and newlines will be escaped.

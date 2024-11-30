@@ -14,7 +14,7 @@ struct env {
     bool has(std::string_view key) const;
     void set(std::string_view key, mal_type value);
     mal_type get(std::string_view key) const;
-    void dump(std::ostream& out) const;
+    void dump(std::ostream& out, bool full = false) const;
     
 private:
     env() = delete;

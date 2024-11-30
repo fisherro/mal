@@ -35,7 +35,7 @@ mal_type env::get(std::string_view key) const
     throw std::runtime_error{std::string(key) + " not found"};
 }
 
-void env::dump(std::ostream& out) const
+void env::dump(std::ostream& out, bool full) const
 {
     const std::string prefix{"EVAL DUMP: "};
     out << prefix << "env " << this << '\n';
@@ -45,9 +45,9 @@ void env::dump(std::ostream& out) const
             << get_mal_type(value) << ":"
             << pr_str(value, true) << '\n';
     }
-    if (my_outer) {
+    if (my_outer and full) {
         out << prefix << "next environment...\n";
-        my_outer->dump(out);
+        my_outer->dump(out, true);
     }
 }
 
