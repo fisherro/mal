@@ -113,10 +113,13 @@ mal_type quasiquote(mal_type ast)
     return ast;
 }
 
+// Forward declaration:
+mal_type eval(mal_type ast, std::shared_ptr<env> current_env);
+
 //Note: We passed the "too much recursion" test before implementing TCO.
 //      Presumably gcc did TCO for us.
 //      But we'll go ahead and do it explicitly.
-mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
+mal_type eval_it(mal_type ast, std::shared_ptr<env> current_env)
 {
     while (true) {
         if (check_debug("DEBUG-EVAL", current_env)) {
@@ -314,6 +317,15 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
         }
         return ast;
     }
+}
+
+mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
+{
+    mal_type m{eval_it(ast, current_env)};
+    if (check_debug("DEBUG-EVAL", current_env)) {
+        std::cout << "EVAL RESULT: " << pr_str(m, true) << '\n';
+    }
+    return m;
 }
 
 std::string print(const mal_type& mt)
