@@ -599,6 +599,20 @@ mal_type backtick(const mal_list& arg_list)
     return results;
 }
 
+mal_type mal_string(const mal_list& arg_list)
+{
+    std::vector<char> result;
+    const auto& args{mal_list_get(arg_list)};
+    for (const mal_type& arg: args) {
+        auto str_opt{try_mal_to<std::vector<char>>(arg)};
+        if (not str_opt) {
+            throw std::runtime_error{"string's arguments must be strings"};
+        }
+        std::ranges::copy(*str_opt, std::back_inserter(result));
+    }
+    return result;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 mal_type not_implemented(const mal_list&)
@@ -676,6 +690,7 @@ std::shared_ptr<env> get_ns()
     ADD_FUNC(ns, seq);
     ns->set("system", mal_proc{core_system});
     ADD_FUNC(ns, backtick);
+    ns->set("string", mal_proc{mal_string});
     return ns;
 }
 
