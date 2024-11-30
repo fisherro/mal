@@ -676,14 +676,6 @@ std::shared_ptr<env> get_ns()
     ADD_FUNC(ns, seq);
     ns->set("system", mal_proc{core_system});
     ADD_FUNC(ns, backtick);
-
-#if 0
-    std::vector<std::string> missing{};
-    for (auto& symbol: missing) {
-        ns->set(symbol, mal_proc{not_implemented});
-    }
-#endif
-
     return ns;
 }
 

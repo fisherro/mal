@@ -73,17 +73,11 @@ mal_type quasiquote(mal_type ast)
 {
     if (auto list_ptr{std::get_if<mal_list>(&ast)}; list_ptr) {
         if (list_ptr->empty()) {
-#ifdef I_DID_IT_MY_WAY
-            // This worked, but triggered a test soft-fail.
-            // The spec says we should convert the vector to a call to vec.
-            return ast;
-#else
             if (list_ptr->is_vector()) {
                 list_ptr->become_list();
                 return make_list("vec", *list_ptr);
             }
             return ast;
-#endif
         }
         if (list_ptr->is_map()) {
             return make_list("quote", ast);
@@ -116,11 +110,7 @@ mal_type quasiquote(mal_type ast)
     if (auto map_ptr{std::get_if<mal_map>(&ast)}; map_ptr) {
         return make_list("quote", ast);
     }
-#if 1
-    return ast; // need to quote?
-#else
-    return make_list("quote", ast);
-#endif
+    return ast;
 }
 
 //Note: We passed the "too much recursion" test before implementing TCO.

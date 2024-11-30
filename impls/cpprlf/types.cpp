@@ -74,18 +74,11 @@ mal_type mal_list_at(const mal_list& list, std::size_t i)
 
 std::optional<mal_type> try_mal_list_at(const mal_list& list, std::size_t i)
 {
-#if 0
-    // For some reason, vector.size() is 1 when I used this version!
-    auto vector{mal_list_helper::get(list)};
-    if (i >= vector.size()) return std::nullopt;
-    return std::any_cast<mal_type>(vector.at(i));
-#else
     try {
         return std::any_cast<mal_type>(mal_list_helper::get(list).at(i));
     } catch (const std::out_of_range&) {
         return std::nullopt;
     }
-#endif
 }
 
 void mal_list_add(mal_list& list, mal_type m)
