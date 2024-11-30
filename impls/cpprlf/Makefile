@@ -2,14 +2,13 @@ CXX=g++-mp-14
 CXXFLAGS=-O0 -Wall -std=c++2b
 LD=$(CXX)
 
+#CXXFLAGS+=-fsanitize=leak
 # address sanitizer not available for arm64
 # I got errors trying hwaddress...might need to install a package?
 #CXXFLAGS+=-fsanitize=hwaddress
-CXXFLAGS+=-fsanitize=leak
 # I got errors with undefined too
 #CXXFLAGS+=-fsanitize=undefined
 
-#DEBUG=-ggdb
 DEBUG=-g
 CXXFLAGS+=$(DEBUG)
 LDFLAGS+=$(DEBUG)

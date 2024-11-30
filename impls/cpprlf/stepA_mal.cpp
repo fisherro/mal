@@ -261,8 +261,6 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                         | std::ranges::to<std::vector<char>>();
                     } catch (const mal_type& m) {
                         what = m;
-                    } catch (const mal_exception& e) {
-                        what = e.get();
                     }
                     auto catcher{list->at_to<mal_list>(2)};
                     if (not is_head_this_symbol(catcher, "catch*")) {
@@ -371,6 +369,8 @@ int main(int argc, const char** argv)
                     continue;
                 } catch (const std::exception& e) {
                     std::cout << "Exception: " << e.what() << '\n';
+                } catch (const mal_type& e) {
+                    std::cout << "Exception: " << pr_str(e, true) << '\n';
                 }
             }
         } else {

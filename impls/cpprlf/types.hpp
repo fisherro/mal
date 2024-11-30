@@ -34,7 +34,8 @@ struct debug_me {
         std::cout << ")\n";
     }
     std::string s;
-    debug_me(const std::string& s): s{s} { print("ctor"); }
+    debug_me() { print("ctor"); }
+    debug_me(const std::string& s): s{s} { print("ctor(s)"); }
     debug_me(const debug_me& that): s{that.s} { print("copy ctor", &that); }
     debug_me(debug_me&& that): s{that.s} { print("move ctor", &that); }
     debug_me& operator=(const debug_me& that)
@@ -94,6 +95,9 @@ struct mal_list: mal_meta_holder {
 
     template <typename T>
     T at_to(std::size_t i) const;
+
+    template <typename T>
+    std::optional<T> try_at_to(std::size_t i) const;
 
     void become_list() { my_opener = '('; }
     void become_vector() { my_opener = '['; }
@@ -178,18 +182,6 @@ using mal_type = std::variant<
     mal_proc,
     mal_func>;
 
-struct mal_exception {
-#if 0
-    mal_exception(mal_type m): data{m} {}
-    mal_type get() const { return data; }
-    mal_type data;
-#else
-    mal_exception(mal_type m): data{std::make_shared<mal_type>(m)} {}
-    mal_type get() const { return *data; }
-    std::shared_ptr<mal_type> data;
-#endif
-};
-
 // Wouldn't "box" be a better name for this than "atom"?
 struct atom {
     atom(const mal_type& m): my_value{m} {}
@@ -257,6 +249,14 @@ void mal_list_add(mal_list& list, mal_type m);
 template <typename T>
 T mal_list::at_to(std::size_t i) const
 { return mal_to<T>(mal_list_at(*this, i)); }
+
+template <typename T>
+std::optional<T> mal_list::try_at_to(std::size_t i) const
+{
+    auto opt{try_mal_list_at(*this, i)};
+    if (not opt.has_value()) return std::nullopt;
+    return try_mal_to<T>(*opt);
+}
 
 std::string mal_map_okey_to_ikey(const mal_type& outer_key);
 mal_type mal_map_ikey_to_okey(std::string_view inner_key);

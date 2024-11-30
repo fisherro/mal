@@ -300,17 +300,7 @@ mal_type is_macro(const mal_list& args)
 
 mal_type mal_throw(const mal_list& args)
 {
-#if 0
-    // Calls terminate
     throw mal_list_at(args, 0);
-#endif
-#if 1
-    throw std::runtime_error{pr_str(mal_list_at(args, 0), false)};
-#endif
-#if 0
-    // Calls terminate
-    throw mal_exception{args};
-#endif
 }
 
 mal_type apply(const mal_list& args)

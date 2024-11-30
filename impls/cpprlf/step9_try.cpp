@@ -247,24 +247,22 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
                 }
                 if ("try*" == *symbol) {
                     // (try* A (catch* B C))
-                    if (list->size() < 3) {
-                        throw std::runtime_error("catch* not found");
-                    }
                     // Some sort of destructuring feature would be nice here.
                     auto a{mal_list_at(*list, 1)};
+                    auto catcher_opt{list->try_at_to<mal_list>(2)};
                     mal_type what;
                     try {
                         // Evaluate A.
                         return eval(a, current_env);
                     } catch (const std::exception& e) {
+                        if (not catcher_opt) throw;
                         what = std::string_view{e.what()}
                         | std::ranges::to<std::vector<char>>();
                     } catch (const mal_type& m) {
+                        if (not catcher_opt) throw;
                         what = m;
-                    } catch (const mal_exception& e) {
-                        what = e.get();
                     }
-                    auto catcher{list->at_to<mal_list>(2)};
+                    auto& catcher{*catcher_opt};
                     if (not is_head_this_symbol(catcher, "catch*")) {
                         throw std::runtime_error("catch* not found");
                     }
@@ -367,6 +365,8 @@ int main(int argc, const char** argv)
                     continue;
                 } catch (const std::exception& e) {
                     std::cout << "Exception: " << e.what() << '\n';
+                } catch (const mal_type& e) {
+                    std::cout << "Exception: " << pr_str(e, true) << '\n';
                 }
             }
         } else {

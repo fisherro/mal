@@ -6,6 +6,10 @@ To exclude deferrable and optional tests:
 
 --no-deferrable --no-optional
 
+Note that when running all the tests, the summary only covers the tests for the last step tested. Failures will stop at that step's tests. Soft fails, however, won't stop testing.
+
+So, seeing a zero failures summary doesn't mean there weren't soft fails earlier.
+
 In addition to DEBUG-EVAL, I've implemented DEBUG-EVAL-ENV that makes eval print the current environment if both DEBUG-EVAL and DEBUG-EVAL-ENV are truthy.
 
 Lists and vectors are mostly the same. Differences list here as I discover them:
@@ -24,4 +28,9 @@ nil true false ; ...are all distinct types without only themselves as values.
 (count nil) => 0
 (let* () a b) ; ...is an error. Only one thing allowed in the body.
 (fn* () a b)  ; ...is an error. Only one thing allowed in the body.
+
+pr-str: returns string; print_readably = true
+str: returns string; print_readabaly = false
+prn: prints to stdout; print_readably = true
+println: prints to stdout; print_readably = false
 
