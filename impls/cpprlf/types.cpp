@@ -110,7 +110,7 @@ mal_type mal_proc_call(const mal_proc& p, const mal_list& args)
     return std::any_cast<mal_type>(mal_proc_helper::get(p)(args));
 }
 
-inline std::string demangle(const char* mangled)
+std::string demangle(const char* mangled)
 {
     int status{0};
     return abi::__cxa_demangle(mangled, nullptr, nullptr, &status);

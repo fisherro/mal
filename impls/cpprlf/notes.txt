@@ -34,3 +34,8 @@ str: returns string; print_readabaly = false
 prn: prints to stdout; print_readably = true
 println: prints to stdout; print_readably = false
 
+Self-hosting tests in with -Og:
+42.02s user 3.09s system 98% cpu 45.726 total
+...with -O3:
+29.64s user 2.88s system 98% cpu 33.126 total
+= about 40% faster?

@@ -1,6 +1,9 @@
 CXX=g++-mp-14
-CXXFLAGS=-O0 -Wall -std=c++2b
+CXXFLAGS=-Wall -std=c++2b
 LD=$(CXX)
+
+## -Og for debugging
+## -O3 for max optimizations
 
 #CXXFLAGS+=-fsanitize=leak
 # address sanitizer not available for arm64
@@ -9,9 +12,16 @@ LD=$(CXX)
 # I got errors with undefined too
 #CXXFLAGS+=-fsanitize=undefined
 
-DEBUG=-g
+DEBUG=-Og -g
+RELEASE=-O3 -DNDEBUG
+
+ifeq ($(BUILD),ndebug)
+CXXFLAGS+=$(RELEASE)
+LDFLAGS+=$(RELEASE)
+else
 CXXFLAGS+=$(DEBUG)
 LDFLAGS+=$(DEBUG)
+endif
 
 SRCS=$(wildcard *.cpp)
 MAINS=$(wildcard step*.cpp)
@@ -25,6 +35,9 @@ OBJECTS=$(NOTMAINS:%.cpp=%.o)
 .SUFFIXES: .cpp .o
 
 all: $(TARGETS)
+
+ndebug:
+	make "BUILD=ndebug"
 
 maketest:
 	@echo "MAINS: $(MAINS)"
