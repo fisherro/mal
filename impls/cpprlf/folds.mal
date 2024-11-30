@@ -1,3 +1,21 @@
+;; foldl1 and foldr1 use the first element of the list as the initial element.
+;; foldl1 and foldr1 could be integrated into foldl & foldr based on the number of arguments passed.
+;; foldln and foldrn are a thing too...
+;; Folds could take multiple lists and n-ary functions? Rest, but let's not.
+;; Tree-like folds?
+;; foldl and reverse can do a foldr with tail-recursion!
+
+;; unfold, zip, iterate
+;; Make those a separate anamorphisms library?
+;; SRFI-1: (unfold p f g seed [tail-gen]) and unfold-right
+
+;; Implement common uses of fold?
+;; reverse
+
+;; Implement helpers like flip?
+
+;; Set operations, union merge minus, could be useful too.
+
 (def! foldl (fn* (f z lst)
 		 (if (empty? lst)
 		   z
@@ -8,5 +26,15 @@
 		   z
 		   (foldr f (f (first lst) z) (rest lst)))))
 
+(def! foldl1 (fn* (f lst) (foldl f (first lst) (rest lst))))
+(def! foldr1 (fn* (f lst) (foldr f (first lst) (rest lst))))
+
 (println "foldl: " (foldl - 0 (list 1 2 3 4 5)))
 (println "foldr: " (foldr - 0 (list 1 2 3 4 5)))
+(println "foldl1: " (foldl1 - (list 1 2 3 4 5)))
+(println "foldr1: " (foldr1 - (list 1 2 3 4 5)))
+
+(println "foldl: " (foldl + 0 (list 1 2 3 4 5)))
+(println "foldr: " (foldr + 0 (list 1 2 3 4 5)))
+(println "foldl1: " (foldl1 + (list 1 2 3 4 5)))
+(println "foldr1: " (foldr1 + (list 1 2 3 4 5)))
