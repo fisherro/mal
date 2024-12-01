@@ -124,7 +124,7 @@ When a function says it prints "readably", that means that strings will be enclo
 
 `apply`
 
-`map`
+`map`: takes a function and a list (or vector) and evaluates the function against every element of the list (or vector) one at a time and returns the results as a list.
 
 `readline`
 
@@ -154,6 +154,20 @@ When a function says it prints "readably", that means that strings will be enclo
 
 ## Predefined
 
-not cond eval load-file *ARGV* *host-language*
+`not`
+
+`cond`
+
+    (cond
+        (vector? ast)            (list 'vec (qq-foldr ast))
+        (map? ast)               (list 'quote ast)
+        (symbol? ast)            (list 'quote ast)
+        (not (list? ast))        ast
+        (= (first ast) 'unquote) (if (= 2 (count ast))
+                                   (nth ast 1)
+                                   (throw "unquote expects 1 argument"))
+        "else"                   (qq-foldr ast))
+
+eval load-file *ARGV* *host-language*
 
 

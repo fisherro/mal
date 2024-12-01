@@ -8,21 +8,7 @@
       (let* [r (gensym)]
 	`(let* (~r ~(first xs)) (if ~r ~r (or ~@(rest xs))))))))
 
-(def! plain "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-;(prn plain)
-
-(def! encoded "NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm")
-;(prn encoded)
-
-(def! build-dict
-  (fn* (a b z)
-    (if (or (empty? a) (empty? b))
-      z
-      (build-dict (rest a) (rest b) (assoc z (first a) (first b))))))
-
-(def! dict (build-dict (seq plain) (seq encoded) {}))
-;(prn dict)
-
+;; This version of get will return the key if a value is not found.
 (def! get*
   (fn* (map key)
     (let* (value (get map key))
@@ -31,12 +17,69 @@
 	key))))
 
 (def! rot-13
-  (fn* (in out)
-    (if (empty? in)
-      out
-      (rot-13 (rest in) (conj out (get* dict (first in)))))))
+  (let* ()
+    (do
+      (def! plain "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+      (def!  encoded "NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm")
+      (def! build-dict
+	(fn* (a b z)
+	  (if (or (empty? a) (empty? b))
+	    z
+	    (build-dict (rest a) (rest b) (assoc z (first a) (first b))))))
+      (def! dict (build-dict (seq plain) (seq encoded) {}))
+      (def! inner-rot-13
+	(fn* (in out)
+	  (if (empty? in)
+	    out
+	    (inner-rot-13 (rest in) (conj out (get* dict (first in)))))))
+      (fn* (in) (inner-rot-13 in [])))))
 
 (def! joke "Why did the chicken cross the road?\nGb trg gb gur bgure fvqr!")
+
+(println "Rot-13 of...")
 (println joke)
 (println)
+(println "..is:")
 (println (apply string (rot-13 (seq joke) [])))
+
+(def! find-index
+  (fn* (value lst)
+    (let* (find (fn* (value lst n)
+		  (if (>= n (count lst))
+		    false
+		  (if (= value (nth lst n))
+		    n
+		    (find value lst (+ n 1))))))
+      (find value lst 0))))
+
+(def! mod
+  (fn* (a b)
+    (if (< a b)
+      a
+      (mod (- a b) b))))
+
+(def! caesar
+  (let* ()
+    (do
+      (def! upper (seq "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+      (def! lower (seq "abcdefghijklmnopqrstuvwxyz"))
+      (fn* (n message)
+	(do
+	  (def! lookup
+	    (fn* (char)
+	      (do
+		(def! uindex (find-index char upper))
+		(def! lindex (find-index char lower))
+		(cond
+		  uindex (nth upper (mod (+ uindex n) (count upper)))
+		  lindex (nth lower (mod (+ lindex n) (count lower)))
+		  "else" char))))
+	  (apply string (map lookup (seq message))))))))
+
+(println)
+(println "Rot-13 using the caesar function:")
+(println (caesar 13 joke))
+(println)
+(println "(caesar 1 joke):")
+(println (caesar 1 joke))
+
