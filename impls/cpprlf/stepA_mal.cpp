@@ -12,6 +12,8 @@
 #include <string>
 #include <string_view>
 
+unsigned eval_indent{0};
+
 auto read(std::string_view s)
 {
     return read_str(s);
@@ -124,10 +126,13 @@ mal_type eval_it(mal_type ast, std::shared_ptr<env> current_env)
 {
     while (true) {
         if (check_debug("DEBUG-EVAL", current_env)) {
-            std::println("EVAL: {}", pr_str(ast, true));
+            std::string indent(eval_indent, '-');
+            std::println("{}EVAL: {}", indent, pr_str(ast, true));
             if (check_debug("DEBUG-EVAL-ENV-FULL", current_env)) {
+                //TODO: Pass indent
                 current_env->dump(true);
             } else if (check_debug("DEBUG-EVAL-ENV", current_env)) {
+                //TODO: Pass indent
                 current_env->dump(false);
             }
         }
@@ -322,10 +327,13 @@ mal_type eval_it(mal_type ast, std::shared_ptr<env> current_env)
 
 mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
 {
+    ++eval_indent;
     mal_type m{eval_it(ast, current_env)};
     if (check_debug("DEBUG-EVAL", current_env)) {
-        std::println("EVAL RESULT: {}", pr_str(m, true));
+        std::println("{}EVAL RESULT: {}",
+                std::string(eval_indent, '-'), pr_str(m, true));
     }
+    --eval_indent;
     return m;
 }
 
