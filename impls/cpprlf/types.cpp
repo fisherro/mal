@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <any>
+#include <format>
 #include <print>
 #include <ranges>
 #include <span>
@@ -67,10 +68,8 @@ mal_type mal_list_at(const mal_list& list, std::size_t i)
 {
     std::optional<mal_type> element_opt{try_mal_list_at(list, i)};
     if (not element_opt) {
-        std::ostringstream message;
-        message << "Requesting index " << i
-            << "; list size: " << list.size();
-        throw mal_to_exception{message.str()};
+        throw mal_to_exception{
+            std::format("Requesting index {}; list size: {}", i, list.size())};
     }
     return *element_opt;
 }

@@ -40,6 +40,7 @@ struct reader {
 
     std::string dump() const
     {
+        // Not using std::format here because std::quoted is nice.
         std::ostringstream out;
         out << "position: " << my_position << ": ";
         for (const auto& token: my_tokens) {

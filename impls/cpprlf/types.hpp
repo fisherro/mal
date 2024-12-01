@@ -1,11 +1,11 @@
 #pragma once
 #include <any>
+#include <format>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <source_location>
 #include <span>
-#include <sstream> //TODO: Replace with std::format?
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -213,15 +213,14 @@ T mal_to(const mal_type& m,
 {
     const T* value_ptr{std::get_if<T>(&m)};
     if (not value_ptr) {
-        std::ostringstream message;
-        message << location.file_name()
-            << '(' << location.line() << "): "
-            << location.function_name()
-            << ": requested type: "
-            << demangle(typeid(T).name())
-            << "; real type: "
-            << get_mal_type(m);
-        throw mal_to_exception{message.str()};
+        auto message{std::format(
+                "{}({}): {}: requested type: {}; real type: {}",
+                location.file_name(),
+                location.line(),
+                location.function_name(),
+                demangle(typeid(T).name()),
+                get_mal_type(m))};
+        throw mal_to_exception{message};
     }
     return *value_ptr;
 }

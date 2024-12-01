@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -449,11 +450,9 @@ mal_type keys(const mal_list& args)
     auto arg{mal_list_at(args, 0)};
     auto map_opt{mal_to_map(arg)};
     if (not map_opt) {
-        std::ostringstream message;
-        message << "keys called with "
-            << get_mal_type(arg)
-            << " instead of a map";
-        throw std::runtime_error{message.str()};
+        throw std::runtime_error{
+            std::format("keys called with {} instead of a map",
+                    get_mal_type(arg))};
     }
     auto pairs{mal_map_pairs(*map_opt)};
     // Theres a view for this...but I'm not using it.
