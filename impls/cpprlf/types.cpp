@@ -334,7 +334,14 @@ mal_func::mal_func(mal_list ast, std::shared_ptr<env> current_env):
 #ifdef MAL_FUNC_DEBUG
     ,my_debug{pr_str(my_params, true) + pr_str(mal_list_at(ast, 2), true)}
 #endif
-{}
+{
+    if (ast.size() > 3) {
+        throw std::runtime_error{
+            "The body of a fn* should be a single form. "
+            "Use (do ...) if you need multiple forms."
+        };
+    }
+}
 
 mal_proc mal_func::proc() const
 {
