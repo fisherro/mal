@@ -6,6 +6,7 @@
 #include <exception>
 #include <functional>
 #include <iostream>
+#include <print>
 #include <ranges>
 #include <span>
 #include <string>
@@ -123,11 +124,11 @@ mal_type eval_it(mal_type ast, std::shared_ptr<env> current_env)
 {
     while (true) {
         if (check_debug("DEBUG-EVAL", current_env)) {
-            std::cout << "EVAL: " << pr_str(ast, true) << '\n';
+            std::println("EVAL: {}", pr_str(ast, true));
             if (check_debug("DEBUG-EVAL-ENV-FULL", current_env)) {
-                current_env->dump(std::cout, true);
+                current_env->dump(true);
             } else if (check_debug("DEBUG-EVAL-ENV", current_env)) {
-                current_env->dump(std::cout, false);
+                current_env->dump(false);
             }
         }
         // Symbols and keywords:
@@ -323,7 +324,7 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
 {
     mal_type m{eval_it(ast, current_env)};
     if (check_debug("DEBUG-EVAL", current_env)) {
-        std::cout << "EVAL RESULT: " << pr_str(m, true) << '\n';
+        std::println("EVAL RESULT: {}", pr_str(m, true));
     }
     return m;
 }
@@ -379,17 +380,17 @@ int main(int argc, const char** argv)
             rep(R"RAW((println (str "Mal [" *host-language* "]")))RAW",
                     repl_env);
             while (true) {
-                std::cout << "user> ";
+                std::print("user> ");
                 std::string line;
                 if (not std::getline(std::cin, line)) break;
                 try {
-                    std::cout << rep(line, repl_env) << '\n';
+                    std::println("{}", rep(line, repl_env));
                 } catch (const comment_exception&) {
                     continue;
                 } catch (const std::exception& e) {
-                    std::cout << "Exception: " << e.what() << '\n';
+                    std::println("Exception: {}", e.what());
                 } catch (const mal_type& e) {
-                    std::cout << "Exception: " << pr_str(e, true) << '\n';
+                    std::println("Exception: {}", pr_str(e, true));
                 }
             }
         } else {
@@ -410,7 +411,7 @@ int main(int argc, const char** argv)
             rep(load_string, repl_env);
         }
     } catch (const std::exception& e) {
-        std::cout << "\nEXCEPTION: " << e.what() << '\n';
+        std::println("\nEXCEPTION: {}", e.what());
     }
 }
 

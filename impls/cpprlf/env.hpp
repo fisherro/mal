@@ -1,7 +1,5 @@
 #pragma once
 #include "types.hpp"
-#include "printer.hpp"
-#include <iostream>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -14,7 +12,7 @@ struct env {
     bool has(std::string_view key) const;
     void set(std::string_view key, mal_type value);
     mal_type get(std::string_view key) const;
-    void dump(std::ostream& out, bool full = false) const;
+    void dump(bool full = false) const;
     
 private:
     env() = delete;

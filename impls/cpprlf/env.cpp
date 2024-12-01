@@ -1,6 +1,7 @@
 #include "env.hpp"
-#include <iostream>
+#include "printer.hpp"
 #include <memory>
+#include <print>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -35,19 +36,17 @@ mal_type env::get(std::string_view key) const
     throw std::runtime_error{std::string(key) + " not found"};
 }
 
-void env::dump(std::ostream& out, bool full) const
+void env::dump(bool full) const
 {
     const std::string prefix{"EVAL DUMP: "};
-    out << prefix << "env " << this << '\n';
+    std::println("{}env {}", prefix, reinterpret_cast<const void*>(this));
     for (auto& [key, value]: my_data) {
-        out << prefix
-            << key << ":"
-            << get_mal_type(value) << ":"
-            << pr_str(value, true) << '\n';
+        std::println("{}{}:{}:{}",
+                prefix, key, get_mal_type(value), pr_str(value, true));
     }
     if (my_outer and full) {
-        out << prefix << "next environment...\n";
-        my_outer->dump(out, true);
+        std::println("{}next environment...", prefix);
+        my_outer->dump(true);
     }
 }
 

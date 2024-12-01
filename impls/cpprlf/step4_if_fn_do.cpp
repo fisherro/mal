@@ -27,7 +27,7 @@ mal_type eval(mal_type ast, std::shared_ptr<env> current_env)
     if (check_debug("DEBUG-EVAL", current_env)) {
         std::cout << "EVAL: " << pr_str(ast, true) << '\n';
         if (check_debug("DEBUG-EVAL-ENV", current_env)) {
-            current_env->dump(std::cout);
+            current_env->dump();
         }
     }
     if (auto sp{std::get_if<std::string>(&ast)}; sp) {

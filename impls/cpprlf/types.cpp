@@ -1,8 +1,10 @@
 #include "types.hpp"
 #include "env.hpp"
+#include "printer.hpp"
 
 #include <algorithm>
 #include <any>
+#include <print>
 #include <ranges>
 #include <span>
 #include <stdexcept>
@@ -39,7 +41,8 @@ bool mal_list::operator==(const mal_list& that) const
     auto dump = [](std::string_view prefix, const auto& vec)
     {
         for (const auto& element: vec) {
-            std::cout << "mal_list::op==: " << prefix << ": " << pr_str(element, true) << '\n';
+            std::println("mal_list::op==({}): {}",
+                    prefix, pr_str(element, true));
         }
     };
 #endif
@@ -209,8 +212,10 @@ bool mal_map::operator==(const mal_map& that) const
         const auto& this_value{std::any_cast<mal_type>(this_pair.second)};
         const auto& that_value{std::any_cast<mal_type>(that_iter->second)};
 #ifdef MAL_DEBUG_OP_EQUALS
-        std::cout << "mal_map::op==: this: " << this_pair.first << " -> " << pr_str(this_value, true) << '\n';
-        std::cout << "mal_map::op==: that: " << that_iter->first << " -> " << pr_str(that_value, true) << '\n';
+        std::println("mal_map::op==(this): {} -> {}",
+                this_pair.first, pr_str(this_value, true));
+        std::println("mal_map::op==(that): {} -> {}",
+                that_iter->first, pr_str(that_value, true));
 #endif
         if (this_value != that_value) return false;
     }
@@ -269,7 +274,8 @@ mal_type mal_func_ast(const mal_func& f)
 std::shared_ptr<env> mal_func::make_env(const mal_list& args) const
 {
 #ifdef MAL_FUNC_DEBUG
-    std::cout << __func__ << ": this = " << reinterpret_cast<const void*>(&my_debug) << '\n';
+    std::println("{}: this = {}", __func__,
+            reinterpret_cast<const void*>(&my_debug));
 #endif
 
     auto mal_to_string = [](const mal_type& m) -> std::string

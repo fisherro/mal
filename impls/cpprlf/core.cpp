@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <print>
 #include <ranges>
 #include <span>
 #include <stdexcept>
@@ -81,21 +82,21 @@ mal_type str(const mal_list& args)
 
 mal_type prn(const mal_list& args)
 {
-    std::cout << (mal_list_get(args)
-        | std::views::transform(pr_str_true)
-        | std::views::join_with(' ')
-        | std::ranges::to<std::string>())
-        << '\n';
+    std::println("{}",
+            (mal_list_get(args)
+             | std::views::transform(pr_str_true)
+             | std::views::join_with(' ')
+             | std::ranges::to<std::string>()));
     return mal_nil{};
 }
 
 mal_type println(const mal_list& args)
 {
-    std::cout << (mal_list_get(args)
-        | std::views::transform(pr_str_false)
-        | std::views::join_with(' ')
-        | std::ranges::to<std::string>())
-        << '\n';
+    std::println("{}",
+            (mal_list_get(args)
+             | std::views::transform(pr_str_false)
+             | std::views::join_with(' ')
+             | std::ranges::to<std::string>()));
     return mal_nil{};
 }
 
@@ -477,7 +478,7 @@ mal_type vals(const mal_list& args)
 mal_type core_readline(const mal_list& args)
 {
     auto prompt{args.at_to<std::vector<char>>(0)};
-    std::cout << (prompt | std::ranges::to<std::string>());
+    std::print("{}", (prompt | std::ranges::to<std::string>()));
     std::string line;
     if (not std::getline(std::cin, line)) return mal_nil{};
     return line | std::ranges::to<std::vector<char>>();

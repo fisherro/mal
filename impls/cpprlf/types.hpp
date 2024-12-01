@@ -5,7 +5,7 @@
 #include <optional>
 #include <source_location>
 #include <span>
-#include <sstream>
+#include <sstream> //TODO: Replace with std::format?
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -14,24 +14,19 @@
 #include <vector>
 
 #ifdef MAL_FUNC_DEBUG
-#include <iostream>
+#include <print>
 #endif
 
 #ifdef MAL_FUNC_DEBUG
 struct debug_me {
     void print(std::string_view mf, const debug_me* that = nullptr) const
     {
-        std::cout << "debug_me("
-            << s
-            << "): "
-            << mf
-            << " ("
-            << reinterpret_cast<const void*>(this);
+        std::print("debug_me({}): {} ({}",
+                s, mf, reinterpret_cast<const void*>(this));
         if (that) {
-            std::cout << " <- "
-                << reinterpret_cast<const void*>(that);
+            std::print(" <- {}", reinterpret_cast<const void*>(that));
         }
-        std::cout << ")\n";
+        std::println(")");
     }
     std::string s;
     debug_me() { print("ctor"); }
