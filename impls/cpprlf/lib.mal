@@ -1,0 +1,44 @@
+;;;; A library of mal macros and functions
+
+;;; Shortcuts for nth
+(def! second (fn* (lst) (nth lst 1)))
+(def! third (fn* (lst) (nth lst 2)))
+
+;; An or macro
+;; Borrowed from test_cascade.mal
+(defmacro! or
+  (fn* [& xs]
+    (if (< (count xs) 2)
+      (first xs)
+      (let* [r (gensym)]
+	`(let* (~r ~(first xs)) (if ~r ~r (or ~@(rest xs))))))))
+
+;; An implementation of gensym
+;;TODO: Should we make it something the reader won't read?
+(def! gensym (fn* () (symbol (backtick "uuidgen"))))
+
+;; A "for" macro based on Scheme's "do".
+;;TODO: Use gensym for the "loop"?
+(defmacro! for
+  (fn* (var-decls stop-expr & commands)
+    `(let* (loop (fn* ~(map first var-decls)
+		   (if ~(first stop-expr)
+		     (do ~@(rest stop-expr))
+		     (do ~@commands
+		       (loop ~@(map third var-decls))))))
+       (loop ~@(map second var-decls)))))
+
+;;; Folds
+(def! foldl (fn* (f z lst)
+		 (if (empty? lst)
+		   z
+		   (foldl f (f z (first lst)) (rest lst)))))
+
+(def! foldr (fn* (f z lst)
+		 (if (empty? lst)
+		   z
+		   (foldr f (f (first lst) z) (rest lst)))))
+
+(def! foldl1 (fn* (f lst) (foldl f (first lst) (rest lst))))
+(def! foldr1 (fn* (f lst) (foldr f (first lst) (rest lst))))
+

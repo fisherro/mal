@@ -1,0 +1,113 @@
+;;; A mal macro based on Scheme's "do" macro.
+;;; Called "for" since mal already uses "do" for "begin".
+
+;; The pattern(s):
+;(for ((var init step ...) ...)
+;     (test expr ...)
+;     command ...)
+;
+;(for-step x) -> x
+;(for-step x y) -> y
+;; Why is there a "..." after step? I'm not sure there should be.
+;; Note that the step is optional, which is the purpose of for-step?
+
+;; The output:
+;; We don't have letrec...or is let* the equivalent?
+;(letrec
+;   ((loop
+;      (lambda (var ...)
+;	(if test
+;	  (begin
+;	    (if #f #f)
+;	    expr ...)
+;	  (begin
+;	    command
+;	    ...
+;	    (loop (for-step var step ...)
+;		  ...))))))
+;   (loop init ...)))
+
+;; I want to be able to write...
+;(def! folder
+;   (fn* (f z lst)
+;     (for
+;       [(input lst (rest input))
+;	(output z (f output (first input)))]
+;       [(empty? input) output])))
+
+;; Loop may require gensym?
+(def! folder
+  (fn* (f z lst)
+    (let* 
+      (loop
+	(fn* (input output)
+	  (if (empty? input)
+	    (do output)
+	    (do (loop (rest input)
+		      (f output (first input)))))))
+      (loop lst z))))
+
+(println (folder + 0 '(1 2 3 4 5)))
+
+;; Need an example that uses all the features!
+;(def! example
+;  (fn* (f z lst)
+;    (for
+;      [(input lst (rest input))
+;       (output z (f output (first input)))]
+;      [(empty? input) (println "exiting") output]
+;      (println "stepping")
+;      (println "intermediate result:" output))))
+
+(def! example
+  (fn* (f z lst)
+    (let* ; This is what the for is transformed into
+      (loop
+	(fn* (input output)
+	  (if (empty? input)
+	    (do
+	      (println "exiting")
+	      output)
+	    (do
+	      (println "stepping")
+	      (println "intermediate result:" output)
+	      (loop (rest input)
+		    (f output (first input)))))))
+      (loop lst z))))
+
+(println (example + 0 '(1 2 3 4 5)))
+
+(def! second (fn* (lst) (nth lst 1)))
+(def! third (fn* (lst) (nth lst 2)))
+
+(def! for-test
+  (fn* (var-decls stop-expr & commands)
+    `(let* (loop (fn* ~(map first var-decls)
+		   (if ~(first stop-expr)
+		     (do ~@(rest stop-expr))
+		     (do ~@commands
+		       (loop ~@(map third var-decls))))))
+       (loop ~@(map second var-decls)))))
+
+(def! for-input
+  (quote
+    (for
+      [(input lst (rest input))
+       (output z (f output (first input)))]
+      [(empty? input) (println "exiting") output]
+      (println "stepping")
+      (println "intermediate result:" output))))
+
+(defmacro! for for-test)
+
+(def! example2
+  (fn* (f z lst)
+    (for
+      [(input lst (rest input))
+       (output z (f output (first input)))]
+      [(empty? input) (println "exiting") output]
+      (println "stepping")
+      (println "intermediate result:" output))))
+
+(println (example2 + 0 '(1 2 3 4 5)))
+
