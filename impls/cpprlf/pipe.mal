@@ -1,0 +1,19 @@
+(defmacro! pipe
+  (fn* (it & exprs)
+    (cond (empty? exprs)
+	  (throw "pipe requires at least one expression")
+	  (= 1 (count exprs))
+	  (first exprs)
+	  (= 2 (count exprs))
+	  `(let* (~it ~(first exprs)) ~(nth exprs 1))
+	  "else"
+	  `(let* (~it ~(first exprs)) (pipe ~it ~@(rest exprs))))))
+
+(pipe this
+      10
+      (+ this 10)
+      (* this 10)
+      (vector this 20)
+      (map (fn* (x) (/ x 5)) this)
+      (vec this)
+      (println this))
