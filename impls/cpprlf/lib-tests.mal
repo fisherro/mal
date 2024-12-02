@@ -1,0 +1,45 @@
+(load-file "lib.mal")
+
+(second [1 2 3])
+;=>2
+
+(third [1 2 3])
+;=>3
+
+(or true true)
+;=>true
+(or true false)
+;=>true
+(or false true)
+;=>true
+(or false false)
+;=>false
+(or true (throw "or didn't short-circuit!"))
+;=>true
+
+(for ((x 5 (- x 1)) (y 0 (+ y 1)) (z 100 z)) ((<= x 0) [x y z]) (println (+ (+ x y) z)))
+;/105
+;/105
+;/105
+;/105
+;/105
+;=>[0 5 100]
+
+(foldl + 0 [1 2 3 4 5])
+;=>15
+(foldr cons [] [1 2 3 4 5])
+;=>(5 4 3 2 1)
+
+(infix 2 * 5)
+;=>10
+(infix (fn* (x) (- 0 x)) -20)
+;=>20
+(infix (10 * 3))
+;=>30
+(infix 40)
+;=>40
+(infix (5 * 5) + (50 / 2))
+;=>50
+
+(pipe this 10 (+ this 10) (* this 10) (vector this 20) (map (fn* (x) (/ x 5)) this) (vec this))
+;=>[40 4]
