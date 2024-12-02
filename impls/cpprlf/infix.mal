@@ -1,0 +1,30 @@
+;(define-syntax infix
+;  (syntax-rules ()
+;     ((_ (x . y))
+;      (infix x . y))
+;     ((_ x op y)
+;      (op (infix x) (infix y)))
+;     ((_ op x)
+;      (op (infix x)))
+;     ((_ x)
+;      x)))
+
+(defmacro! infix
+  (fn* (& args)
+    (cond (= (count args) 3)
+	  `(~(nth args 1) (infix ~(nth args 0)) (infix ~(nth args 2)))
+	  (= (count args) 2)
+	  `(~(nth args 0) (infix ~(nth args 1)))
+	  (list? (first args))
+	  `(infix ~@(first args))
+	  "else"
+	  (first args))))
+
+(println (infix 2 * 5))
+;; Mal doesn't have unary minus.
+;(println (infix - 20))
+(infix println 20)
+(println (infix (10 * 3)))
+(println (infix 40))
+(println (infix (5 * 5) + (50 / 2)))
+

@@ -42,3 +42,15 @@
 (def! foldl1 (fn* (f lst) (foldl f (first lst) (rest lst))))
 (def! foldr1 (fn* (f lst) (foldr f (first lst) (rest lst))))
 
+;; Infix macro; NB: No operator precedence!
+(defmacro! infix
+  (fn* (& args)
+    (cond (= (count args) 3)
+	  `(~(nth args 1) (infix ~(nth args 0)) (infix ~(nth args 2)))
+	  (= (count args) 2)
+	  `(~(nth args 0) (infix ~(nth args 1)))
+	  (list? (first args))
+	  `(infix ~@(first args))
+	  "else"
+	  (first args))))
+
