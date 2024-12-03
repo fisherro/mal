@@ -116,6 +116,13 @@ mal_type quasiquote(mal_type ast)
     return ast;
 }
 
+void tc_debug(std::shared_ptr<env> current_env)
+{
+    if (check_debug("DEBUG-TC", current_env)) {
+        std::println("***** tail call *****");
+    }
+}
+
 // Forward declaration:
 mal_type eval(mal_type ast, std::shared_ptr<env> current_env);
 
@@ -217,6 +224,7 @@ mal_type eval_it(mal_type ast, std::shared_ptr<env> current_env)
                     // TCO:
                     ast = body;
                     current_env = new_env;
+                    tc_debug(current_env);
                     continue;
                 }
                 if ("do" == *symbol) {
@@ -233,6 +241,7 @@ mal_type eval_it(mal_type ast, std::shared_ptr<env> current_env)
                     }
                     // TCO:
                     ast = vector.back();
+                    tc_debug(current_env);
                     continue;
                 }
                 if ("if" == *symbol) {
@@ -240,6 +249,7 @@ mal_type eval_it(mal_type ast, std::shared_ptr<env> current_env)
                     if (mal_truthy(eval(condition, current_env))) {
                         // TCO:
                         ast = mal_list_at(*list, 2);
+                        tc_debug(current_env);
                         continue;
                     } else {
                         std::optional<mal_type> alternate{
@@ -247,6 +257,7 @@ mal_type eval_it(mal_type ast, std::shared_ptr<env> current_env)
                         if (not alternate) return mal_nil{};
                         // TCO:
                         ast = *alternate;
+                        tc_debug(current_env);
                         continue;
                     }
                 }
@@ -259,6 +270,7 @@ mal_type eval_it(mal_type ast, std::shared_ptr<env> current_env)
                 if ("quasiquote" == *symbol) {
                     // TCO:
                     ast = quasiquote(mal_list_at(*list, 1));
+                    tc_debug(current_env);
                     continue;
                 }
                 if ("try*" == *symbol) {
@@ -297,6 +309,7 @@ mal_type eval_it(mal_type ast, std::shared_ptr<env> current_env)
             if (auto func_ptr{std::get_if<mal_func>(&call_me)}; func_ptr) {
                 if (func_ptr->is_macro()) {
                     ast = mal_proc_call(func_ptr->proc(), list->rest());
+                    tc_debug(current_env);
                     continue;
                 }
             }
@@ -316,6 +329,7 @@ mal_type eval_it(mal_type ast, std::shared_ptr<env> current_env)
                 // TCO:
                 ast = mal_func_ast(*func_ptr);
                 current_env = func_ptr->make_env(evaluated_args);
+                tc_debug(current_env);
                 continue;
             }
             //TODO: Better exception here?

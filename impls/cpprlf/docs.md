@@ -14,6 +14,8 @@ There are some debug values that can be set.
 
 `--DEBUG-EVAL-ENV-FULL`: If `DEBUG-EVAL` is true, this will dump the full chain of environments whenever `eval` is called. (This will take precedence over plain `DEBUG-EVAL-ENV`.)
 
+`--DEBUG-TC`: If `DEBUG-TC` is true, print `***** tail call *****` whenever a tail call happens.
+
 ## Readably
 
 When a function says it prints "readably", that means that strings will be enclosed by double-quotes and double-quotes, backslashes, and newlines will be escaped.
