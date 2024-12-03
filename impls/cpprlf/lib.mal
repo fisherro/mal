@@ -87,3 +87,14 @@
       `(fn* (& func-args)
 	 ~(loop macro-args '() 0)))))
 
+;; Partial application
+(def! partial
+  (fn* (f & args1)
+    (fn* (& args2)
+      (apply f (concat args1 args2)))))
+
+(def! partialr
+  (fn* (f & args1)
+    (fn* (& args2)
+      (apply f (concat args2 args1)))))
+

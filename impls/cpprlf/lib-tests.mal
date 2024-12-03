@@ -44,6 +44,7 @@
 (pipe this 10 (+ this 10) (* this 10) (vector this 20) (map (fn* (x) (/ x 5)) this) (vec this))
 ;=>[40 4]
 
+;;; See https://srfi.schemers.org/srfi-26/check.scm for more
 ((cut - 10 <>) 1)
 ;=>9
 ((cut - <> 1) 10))
@@ -62,3 +63,10 @@
 ;=>(2 4 6 8 10)
 (map (cut <> 100 10) (list + -))
 ;=>(110 90)
+
+((partial list 1 2 3) 4 5 6)
+;=>(1 2 3 4 5 6)
+
+((partialr list 4 5 6) 1 2 3)
+;=>(1 2 3 4 5 6)
+
