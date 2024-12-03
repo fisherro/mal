@@ -66,3 +66,24 @@
 	  "else"
 	  `(let* (~it ~(first exprs)) (pipe ~it ~@(rest exprs))))))
 
+;; Cut macro based on SRFI-26
+;; This does not support the "rest slot". I haven't yet figured out a good way
+;; to support it.
+(defmacro! cut
+  (fn* (& macro-args)
+    (do
+      (def! loop
+	(fn* (in-args out-args n)
+	    (if (empty? in-args)
+	      out-args
+	      (let* (in (first in-args)
+			is-slot (= in '<>))
+		(loop (rest in-args)
+		      (concat out-args
+			      (if is-slot
+				`((nth func-args ~n))
+				`(~in)))
+		      (if is-slot (+ n 1) n))))))
+      `(fn* (& func-args)
+	 ~(loop macro-args '() 0)))))
+

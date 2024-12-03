@@ -1,0 +1,125 @@
+;(cut - 10 <>)
+;=>
+;(fn* (<>)
+;  (- 10 <>))
+;(fn* (& args)
+;  (- 10 (first args)))
+;
+;(cut - <> 10)
+;=>
+;(fn* (<>)
+;  (- <> 10))
+;
+;(cut <> 10 1)
+;=>
+;(fn* (<>)
+;  (<> 10 1))
+;
+;(cut cons (+ a 1) <>)
+;=>
+;(fn* (<>) (cons (+ a 1) <>))
+;
+;(cut list 1 <> 3 <> 5)
+;=>
+;(fn* (<1> <2>)
+;  (list 1 <1> 3 <2> 5))
+;(fn* (& args)
+;  (list 1 (first args) 3 (second args) 5))
+
+;; Look through the args for <>.
+;; Replace with (first args), (second args), etc.
+
+;;TODO: <...>
+
+(defmacro! cut1
+  (fn* (& args)
+    `(fn* (<>)
+       ~args)))
+
+(println "TESTING CUT1")
+(println ((cut1 - 10 <>) 1))
+(println ((cut1 - <> 1) 10))
+(println ((cut1 <> 10 1) -))
+
+(defmacro! cut2
+  (fn* (& macro-args)
+    (do
+      (def! loop
+	(fn* (in-args out-args n)
+	    (if (empty? in-args)
+	      out-args
+	      (let* (in (first in-args)
+			is-slot (= in '<>))
+		(loop (rest in-args)
+		      (concat out-args
+			      (if is-slot
+				`((nth func-args ~n))
+				`(~in)))
+		      (if is-slot (+ n 1) n))))))
+      `(fn* (& func-args)
+	 ~(loop macro-args '() 0)))))
+       
+(println "TESTING CUT2")
+(println ((cut2 - 10 <>) 1))
+(let* (a 9) (println ((cut2 cons (+ a 1) <>) '())))
+(println ((cut2 list 1 <> 3 <> 5) 2 3))
+(println ((cut2 list)))
+(let* (a 11 b 1) (println ((cut2 <> a b) -)))
+(println (map (cut2 * 2 <>) '(1 2 3 4)))
+(println (map (cut2 <> 100 10) (list + -)))
+
+;(cut list 1 <> 3 <...>)	is the same as	(lambda (x2 . xs) (apply list 1 x2 3 xs))
+
+(def! debug
+  (fn* (value)
+    (do
+      (println "debug:" value)
+      value)))
+
+;; This currently replaces a rest-slot with a list of the remaining arguments
+;; instead of slicing them in. The splicing needs to be done in the specialized
+;; function. It can't be done while specializing the function because the
+;; number of arguments is unknown until the specialized function is called.
+(defmacro! cut3
+  (fn* (& macro-args)
+    (do
+      ; Needs to be defined within the returned fn
+      (def! restn
+	(fn* (n lyst)
+	  (if (= n 0)
+	    lyst
+	    (restn (- n 1) (rest lyst)))))
+      (def! loop
+	(fn* (in-args out-args n)
+	  (if (empty? in-args)
+	    out-args
+	    (let* (in (first in-args)
+		      is-slot (= in '<>)
+		      is-rest (= in '<...>))
+	      (loop (rest in-args)
+		    (concat out-args
+			    (cond is-slot
+				  `((nth func-args ~n))
+				  is-rest
+				  `((restn ~n func-args))
+				  "else"
+				  `(~in)))
+		    (if is-slot (+ n 1) n))))))
+      `(fn* (& func-args)
+	 (do
+	   (def! restn
+	     (fn* (n lyst)
+	       (if (= n 0)
+		 lyst
+		 (restn (- n 1) (rest lyst)))))
+	   ~(loop macro-args '() 0))))))
+
+(println "TESTING CUT3")
+(println ((cut3 - 10 <>) 1))
+(let* (a 9) (println ((cut3 cons (+ a 1) <>) '())))
+(println ((cut3 list 1 <> 3 <> 5) 2 3))
+(println ((cut3 list)))
+(let* (a 11 b 1) (println ((cut3 <> a b) -)))
+(println (map (cut3 * 2 <>) '(1 2 3 4)))
+(println (map (cut3 <> 100 10) (list + -)))
+(println ((cut3 list 1 <> 3 <...>) 2 4 5 6))

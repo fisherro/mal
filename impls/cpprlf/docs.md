@@ -74,9 +74,9 @@ When a function says it prints "readably", that means that strings will be enclo
 
 `swap!`
 
-`cons`
+`cons`: this function takes a list as its second parameter and returns a new list that has the first argument prepended to it.
 
-`concat`
+`concat`: this functions takes 0 or more lists as parameters and returns a new list that is a concatenation of all the list parameters.
 
 `nth`
 
