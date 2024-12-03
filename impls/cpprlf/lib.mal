@@ -58,6 +58,45 @@
 ;; reverse will reverse a list
 (def! reverse (fn* (lyst) (fold (fn* (a b) (cons b a)) '() lyst)))
 
+;;; Unfolds
+;; Unfold-simple is unfold from SRFI-1. It is NOT tail recursive.
+;; The optional tail parameter is not supported.
+(def! unfold-simple
+  (fn* (p f g seed)
+    (if (p seed) '()
+      (cons (f seed)
+	    (unfold-simple p f g (g seed))))))
+
+;; Unfold is like unfold from SRFI-1 but (internally) transformed to
+;; CPS so that it is tail recursive.
+;; The optional tail parameter is not supported.
+(def! unfold
+  (fn* (p f g seed)
+    (do
+      (def! pk (fn* (x k) (k (p x))))
+      (def! fk (fn* (x k) (k (f x))))
+      (def! gk (fn* (x k) (k (g x))))
+      (def! cons-k (fn* (x y k) (k (cons x y))))
+      (def! helper-k
+	(fn* (seed k)
+	  (pk seed (fn* (bool)
+		     (if bool (k '())
+		       (fk seed (fn* (f-seed)
+				  (gk seed (fn* (g-seed)
+					     (helper-k g-seed (fn* (helper-result)
+								(cons-k f-seed helper-result k))))))))))))
+      (helper-k seed (fn* (x) x)))))
+
+;; unfoldr is SRFI-1's unfold-right.
+;; The optional tail parameter is not supported.
+(def! unfoldr
+  (fn* (p f g seed)
+    (do
+      (def! loop
+	(fn* (s lyst)
+	  (if (p s) lyst (loop (g s) (cons (f s) lyst)))))
+      (loop seed '()))))
+
 ;; Infix macro; NB: No operator precedence!
 (defmacro! infix
   (fn* (& args)

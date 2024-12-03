@@ -66,15 +66,15 @@ When a function says it prints "readably", that means that strings will be enclo
 
 `slurp`
 
-`atom`
+`atom`: Takes a Mal value and returns a new atom which points to that Mal value.
 
-`atom?`
+`atom?`: Takes an argument and returns true if the argument is an atom.
 
-`deref`
+`deref`:  Takes an atom argument and returns the Mal value referenced by this atom.
 
-`reset!`
+`reset!`: Takes an atom and a Mal value; the atom is modified to refer to the given Mal value. The Mal value is returned.
 
-`swap!`
+`swap!`: Takes an atom, a function, and zero or more function arguments. The atom's value is modified to the result of applying the function with the atom's value as the first argument and the optionally given function arguments as the rest of the arguments. The new atom's value is returned. (Side note: Mal is single-threaded, but in concurrent languages like Clojure, swap! promises atomic update: `(swap! myatom (fn* [x] (+ 1 x)))` will always increase the myatom counter by one and will not suffer from missing updates when the atom is updated from multiple threads.)
 
 `cons`: this function takes a list as its second parameter and returns a new list that has the first argument prepended to it.
 
