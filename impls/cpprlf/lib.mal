@@ -13,6 +13,15 @@
       (let* [r (gensym)]
 	`(let* (~r ~(first xs)) (if ~r ~r (or ~@(rest xs))))))))
 
+;; An and macro
+;; Based on the or above and R5RS section 7.3.
+(defmacro! and
+  (fn* [& xs]
+    (let* (c (count xs))
+      (cond (< c 1) true
+	    (= c 1) (first xs)
+	    "else" `(if ~(first xs) (and ~@(rest xs)) false)))))
+
 ;; An implementation of gensym
 ;;TODO: Should we make it something the reader won't read?
 (def! gensym (fn* () (symbol (backtick "uuidgen"))))
@@ -30,18 +39,21 @@
 
 ;;; Folds
 ;; fold is a left fold
+;; Based on the Wikipedia article.
 (def! fold (fn* (f z lst)
 		 (if (empty? lst)
 		   z
 		   (fold f (f z (first lst)) (rest lst)))))
 
 ;; foldr-simple is a straight-forward right fold
+;; Based on the Wikipedia article.
 (def! foldr-simple (fn* (f z lst)
 		 (if (empty? lst)
 		   z
 		   (f (first lst) (foldr-simple f z (rest lst))))))
 
 ;; foldr uses two folds in order to be tail recursive
+;; As suggested by the Wikipedia article.
 (def! foldr (fn* (f z lyst)
 	      (fold (fn* (a b)
 		      (f b a))
@@ -52,6 +64,7 @@
 			  lyst))))
 
 ;; fold1 & foldr1 don't take an initial value
+;; Based on the Wikipedia article.
 (def! fold1 (fn* (f lst) (fold f (first lst) (rest lst))))
 (def! foldr1 (fn* (f lst) (foldr f (first lst) (rest lst))))
 

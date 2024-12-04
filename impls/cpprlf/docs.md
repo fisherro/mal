@@ -22,6 +22,18 @@ When a function says it prints "readably", that means that strings will be enclo
 
 ## Reader macros
 
+`'form` &rarr; `(quote form)`
+
+<code>&#96;form</code> &rarr; `(quasiquote form)`
+
+`~form` &rarr; `(unquote form)`
+
+`~@form` &rarr; `(splice-unquote form)`
+
+`@form` &rarr; `(deref form)`
+
+`^(metadata data)` &rarr; `(with-meta data metadata)`
+
 ## Special forms
 
 `(def! <name> <value>)`: Binds a name to a value in the current environment.
