@@ -1,0 +1,153 @@
+(load-file "lib.mal")
+
+(def! identity (fn* (arg) arg))
+
+(def! modulo (fn* (a b) (infix a - (b * (a / b)))))
+
+(def! leap? (fn* (year) (cond (modulo year 4) false
+			      (modulo year 100) true
+			      (modulo year 400) false
+			      "else" true)))
+
+(def! days-in-month
+  (fn* (month year)
+    (do
+      (def! d (nth [31 28 31 30 31 30 31 31 30 31 30 31]
+		   (infix month - 1)))
+      (if (not (infix month = 2)) d
+	(if (leap? year) 29 28)))))
+
+;; day-of-week algorithm requires floating-point numbers
+;; So, I cheat.
+(def! day-of-week
+  (fn* (day month year)
+    (read-string
+      (backtick
+	(string "date -j -f '%d-%m-%Y' +'%w' "
+		(str day) "-" (str month) "-" (str year))))))
+
+(def! month->string
+  (fn* (month)
+    (nth ["January"
+	  "February"
+	  "March"
+	  "April"
+	  "May"
+	  "June"
+	  "July"
+	  "August"
+	  "September"
+	  "October"
+	  "November"
+	  "December"
+	  "Undecember"]
+	 (infix month - 1))))
+
+(def! make-list
+  (fn* (count value)
+    (map (fn* (x) value) (iota count 1))))
+
+(def! iota
+  (fn* (max start)
+    (unfold (partialr > max)
+	    identity
+	    (partial + 1)
+	    start)))
+
+(def! number->string str)
+
+(def! center-string
+  (fn* (stryng width)
+    (apply string
+	   (concat
+	     (make-list (infix (width - (count (seq stryng))) / 2) " ")
+	     (list stryng)))))
+
+;TODO: Use make-list
+;TODO: Use pipe?
+(def! string-pad
+  (fn* (stryng size)
+    (do
+      (def! maybe-lyst (seq stryng))
+      (def! lyst (if maybe-lyst maybe-lyst '()))
+      (def! n (count lyst))
+      (cond (infix n >= size) stryng
+	    "else" (apply string
+			  (concat
+			    (map (fn* (x) " ") (iota (infix size - n) 1))
+			    lyst))))))
+
+(def! compose
+  (fn* (f g) (fn* (x) (f (g x)))))
+
+(def! append concat)
+
+(def! min (fn* (a b) (if (infix a < b) a b)))
+
+(def! take
+  (fn* (lyst n)
+    (for ((i 0 (infix i + 1))
+	  (input lyst (rest input))
+	  (output '() (cons (first input) output)))
+	 ((infix i >= n) (reverse output)))))
+
+(def! drop
+  (fn* (lyst n)
+    (for ((i 0 (infix i + 1))
+	  (result lyst (rest result)))
+	 ((infix i >= n) result))))
+
+(def! chunk
+  (fn* (n lyst)
+    (unfold empty?
+	    (fn* (lyst)
+	      (take lyst (min n (count lyst))))
+	    (fn* (lyst)
+	      (drop lyst (min n (count lyst))))
+	    lyst)))
+
+(def! string-join
+  (fn* (stryngs delimiter)
+    (do
+      (def! d (seq delimiter))
+      (apply string
+	     (fold (fn* (a b) (if a (concat a d b) b))
+		   false
+		   (map seq stryngs))))))
+
+;TODO: Use pipe
+(def! make-days
+  (fn* (month year)
+    (string-join (map (cut string-join <> " ")
+		      (chunk 7
+			     (append (make-list (day-of-week 1 month year) "  ")
+				     (map (compose (cut string-pad <> 2)
+						   number->string)
+					  (iota (days-in-month month year)
+						1)))))
+		 "\n")))
+
+(def! the-month
+  (if (infix (count *ARGV*) >= 1)
+    (read-string (first *ARGV*))
+    1))
+(def! the-year
+  (if (infix (count *ARGV*) >= 2)
+    (read-string (second *ARGV*))
+    2000))
+
+(println (center-string (str (month->string the-month) " " the-year) 20))
+(println "Su Mo Tu We Th Fr Sa")
+(println (make-days the-month the-year))
+
+;(println (string-join '("hello" "world") " "))
+;(println (iota 31 1))
+;(prn (number->string 5))
+;(prn (string-pad "" 2))
+;(prn (string-pad "1" 2))
+;(prn (string-pad "22" 2))
+;(println ((compose (partialr + 1) (partialr * 2)) 10))
+;(prn (make-list 5 "x"))
+;(println (drop '(1 2 3 4 5) 2))
+;(println (take '(1 2 3 4 5) 2))
+;(println (modulo 8 3))
