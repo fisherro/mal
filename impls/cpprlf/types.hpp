@@ -61,6 +61,13 @@ inline bool is_keyword(std::string_view symbol)
  *
  * While mal_list is a std::vector<std::any> it only holds mal_type elements.
  * While mal_proc return a std::any, that result always holds a mal_type.
+ *
+ * After doing some tests, with the compiler I'm currently using...
+ *  g++-mp-14 (MacPorts gcc14 14.2.0_3+stdlib_flag) 14.2.0: 8
+ * ...a std::any will heap allocate its contents if it is greater than
+ * 8 bytes. Since a mal_type is certainly greater than 8 bytes, the std::any
+ * isn't really gaining us anything here that we couldn't have accomplished
+ * with less trouble using pointers. u_u
  */
 
 struct mal_list: mal_meta_holder {
