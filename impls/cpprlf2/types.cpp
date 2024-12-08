@@ -1,82 +1,18 @@
+#include "printer.hpp"
 #include "types.hpp"
-#include <ranges>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <variant>
+#include <vector>
 
-std::string to_string(const Value& value, bool readably)
+#if 0
+#include <ranges> // Bring back if I can get original boxen_to_map working.
+#endif
+
+std::size_t Key_hash::operator()(const Key& key) const noexcept
 {
-    return std::visit(
-            [readably](auto x){ return x.to_string(readably); },
-            value);
-}
-
-std::string to_string(const Key& key, bool readably)
-{
-    return std::visit(
-            [readably](auto x){ return x.to_string(readably); },
-            key);
-}
-
-std::string String::to_string(bool print_readably) const noexcept
-{
-    if (print_readably) {
-        // double-quotes, newlines, and backslashes must be escaped
-        // " -> \"
-        // newline -> \n
-        // backslash -> two backslashes
-        //TODO...
-        const std::unordered_map<char, std::string> map{
-            { '"', "\\\"" },
-            { '\n', "\\n" },
-            { '\\', "\\\\" },
-        };
-        std::string s(1, '"');
-        for (char c: *this) {
-            auto iter{map.find(c)};
-            if (map.end() == iter) s.push_back(c);
-            else s += iter->second;
-        }
-        s += '"';
-        return s;
-    }
-    return *this;
-}
-
-//TODO: Concept to limit this to List & Vector
-std::string listish_to_string(const auto& listy, bool readably)
-{
-    std::string s(1, listy.opener());
-    s += listy
-        | std::views::transform(
-                [readably](auto box){ return to_string(box, readably); })
-        | std::views::join_with(std::string{" "})
-        | std::ranges::to<std::string>();
-    s += listy.closer();
-    return s;
-}
-
-std::string List::to_string(bool readably) const
-{ return listish_to_string(*this, readably); }
-
-std::string Vector::to_string(bool readably) const
-{ return listish_to_string(*this, readably); }
-
-std::string Map::to_string(bool readably) const
-{
-    auto transformer = [readably](const auto& pair) -> std::string
-    {
-        auto& [key, value] = pair;
-        return key_to_string(key, readably) + ' ' + value.to_string(readably);
-    };
-
-    std::string s(1, '{');
-    s += *this
-        | std::views::transform(transformer)
-        | std::views::join_with(' ')
-        | std::ranges::to<std::string>();
-    s += '}';
-    return s;
+    return std::hash<std::string>{}(to_string(key, false));
 }
 
 Map boxen_to_map(const std::vector<Box>& boxen)

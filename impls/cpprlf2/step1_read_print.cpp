@@ -1,3 +1,4 @@
+#include "printer.hpp"
 #include "reader.hpp"
 #include "types.hpp"
 #include <exception>
@@ -18,7 +19,7 @@ Value eval(const Value& ast, Env_ptr current_env_ptr)
 
 std::string print(const Value& value)
 {
-    return to_string(value, true);
+    return pr_str(value, true);
 }
 
 std::string rep(std::string_view s, Env_ptr repl_env)

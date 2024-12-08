@@ -2,13 +2,13 @@
 #include "types.hpp"
 #include <exception>
 #if 0
-#include <iomanip>
+#include <iomanip> // If Reader::dump comes back...
 #endif
 #include <optional>
 #include <regex>
 #include <source_location>
 #if 0
-#include <sstream>
+#include <sstream> // If Reader::dump comes back...
 #endif
 #include <stdexcept>
 #include <string>
@@ -17,8 +17,6 @@
 #include <vector>
 
 #include <print> // temporary
-
-//TODO: Handle Keywords
 
 const std::unordered_map<std::string, Symbol> reader_macros{
     { "@",  Symbol{"deref"} },
@@ -104,7 +102,7 @@ std::vector<std::string> tokenize(std::string_view sv)
 std::optional<Value> try_number(const std::string& token)
 {
     try {
-        return Number{std::stoi(token)};
+        return std::stoi(token);
     } catch (const std::invalid_argument&) {
         return std::nullopt;
     } 
